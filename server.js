@@ -219,7 +219,13 @@ app.get('/activators/search', (req, res) => {
 });
 
 app.get('/activators/:callsign', (req, res) => {
-	db.getDb().collection('activators').findOne({callsign: req.params.callsign}, {projection: {'_id': false}}, (err, activator) => {
+	let query = {callsign: req.params.callsign}
+	if (/^[0-9]+$/.test(req.params.callsign)) {
+		// User ID
+		query = {userId: parseInt(req.params.callsign)}
+	}
+
+	db.getDb().collection('activators').findOne(query, {projection: {'_id': false}}, (err, activator) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();

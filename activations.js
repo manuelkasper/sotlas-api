@@ -13,7 +13,13 @@ router.get('/:callsign', (req, res) => {
 		noCache: true
 	};
 
-	db.getDb().collection('activators').findOne({callsign: req.params.callsign}, (err, activator) => {
+	let query = {callsign: req.params.callsign}
+	if (/^[0-9]+$/.test(req.params.callsign)) {
+		// User ID
+		query = {userId: req.params.callsign}
+	}
+
+	db.getDb().collection('activators').findOne(query, (err, activator) => {
 		if (err) {
 			res.status(500).end();
 			return;
