@@ -43,6 +43,7 @@ HR,hn,NA
 I,it,EU
 JA,jp,AS
 JX,sj,EU
+JW,no,EU
 KP4,pr,NA
 KH2,gu,OC
 KH0,mp,OC
