@@ -269,4 +269,13 @@ app.get('/my_coordinates', (req, res) => {
 	}
 });
 
+app.get('/my_country', (req, res) => {
+	let geo = geoLookup.get(req.ip);
+	if (!geo) {
+		res.json({});
+	} else {
+		res.json({country: geo.country.iso_code});
+	}
+});
+
 app.listen(config.http.port, config.http.host);
