@@ -91,6 +91,32 @@ app.get('/summits/near', (req, res) => {
 	});
 });
 
+app.get('/summits/recent_photos/:associations/:days', (req, res) => {
+	let limit = 100;
+	let days = req.params.days;
+	if (req.query.limit) {
+		let limitOverride = parseInt(req.query.limit);
+		if (limitOverride > 0 && limitOverride < limit) {
+			limit = limitOverride;
+		}
+	}
+	let query = {
+		"photos.uploadDate": {$gte: new Date((new Date().getTime() - (days * 24 * 60 * 60 * 1000)))}
+	}
+	if (/^([A-Z0-9]{1,3}\|?)+$/.test(req.params.associations)) {
+		query.code = {$regex: new RegExp("^(" + req.params.associations + ")/")};
+	}
+	db.getDb().collection('summits').find(query, {projection: {'_id': false, 'routes': false, 'links': false, 'resources': false}}).sort({"photos.uploadDate": -1}).limit(limit).toArray((err, summits) => {
+		if (err) {
+			console.error(err);
+			res.status(500).end();
+			return;
+		}
+
+		res.json(summits);
+	});
+});
+
 app.get('/summits/:association/:code', (req, res) => {
 	db.getDb().collection('summits').findOne({code: req.params.association + '/' + req.params.code}, {projection: {'_id': false}}, (err, summit) => {
 		if (err) {
