@@ -31,7 +31,7 @@
     "nodemailer": "^6.4.6",
     "reconnect-net": "^1.1.1",
     "request": "^2.88.0",
-    "sharp": "^0.23.4",
+    "sharp": "^0.26.3",
     "togeojson": "^0.16.0",
     "togpx": "^0.5.4",
     "treemap-js": "^1.2.1"
