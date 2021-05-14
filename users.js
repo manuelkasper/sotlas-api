@@ -133,8 +133,6 @@ router.get("/me/summits/tags", jwtCallback, (req, res) => {
     })
 });
 
-
-
 router.get("/me/summit/:association/:code", jwtCallback, (req, res) => {
     const reqUserId = req.user.userid;
     if (!reqUserId) {
@@ -173,9 +171,8 @@ router.get("/me/summit/:association/:code", jwtCallback, (req, res) => {
     });
 });
 
-router.post("/me/summit",
+router.post("/me/summit/:association/:code",
     jwtCallback,
-    body("code").isString(),
     body("isBookmarked").isBoolean(),
     body("notes").optional().trim().default(""),
     body("tags").isArray(),
@@ -192,8 +189,9 @@ router.post("/me/summit",
             return res.status(400).json({errors: errors.array()});
         }
 
+        const code = req.params.association + "/" + req.params.code
         const newSummitData = {
-            code: req.body.code,
+            code,
             isBookmarked: req.body.isBookmarked,
             notes: req.body.notes,
             tags: req.body.tags
@@ -201,10 +199,10 @@ router.post("/me/summit",
 
         db.getDb().collection(DB_COLLECTION_USERS).updateOne(
             {userid: reqUserId},
-            {$pull: {userSummits: {code: newSummitData.code}}}
+            {$pull: {userSummits: {code}}}
         );
 
-        if (newSummitData.isBookmarked === true || newSummitData.notes !== "") {
+        if (newSummitData.isBookmarked === true || newSummitData.notes !== "" || newSummitData.tags.length > 0) {
             db.getDb().collection(DB_COLLECTION_USERS).updateOne(
                 {userid: reqUserId},
                 {$push: {userSummits: newSummitData}},
