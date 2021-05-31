@@ -2,12 +2,14 @@
 4O,me,EU
 4X,il,AS
 5B,cy,AS
+8P,bb,NA
 9A,hr,EU
 9H,mt,EU
 9M,my,AS
 9V,sg,AS
 A6,ae,AS
 BV,tw,AS
+CE,cl,SA
 CT,pt,EU
 CU,pt,EU
 CX,uy,SA
