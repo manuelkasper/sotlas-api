@@ -57,16 +57,11 @@ router.post("/me/settings",
             return res.status(401).send("Missing userid in SSO token").end();
         }
 
-        const user = Object.assign({},
-            req.body.mapServer && {mapServer: req.body.mapServer},
-            req.body.altitudeUnits && {altitudeUnits: req.body.altitudeUnits},
-            req.body.spotPrefs && {spotPrefs: req.body.spotPrefs},
-            req.body.editAlertPrefs && {editAlertPrefs: req.body.editAlertPrefs}
-        );
+        const newSettings = Object.fromEntries(Object.entries(req.body).map(([k, v]) => ['settings.' + k, v]));
 
         db.getDb().collection(DB_COLLECTION_USERS).updateOne(
             {userid: reqUserId},
-            {$set: user},
+            {$set: newSettings},
             {upsert: true}
         );
 
