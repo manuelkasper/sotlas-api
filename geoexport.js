@@ -48,6 +48,24 @@ router.get('/associations/:association.kml', (req, res) => {
 	});
 });
 
+router.get('/associations/:association.geojson', (req, res) => {
+	res.cacheControl = {
+		noCache: true
+	};
+
+	res.set('Content-Type', 'application/geo+json');
+	res.set('Content-Disposition', 'attachment; filename="' + req.params.association + '.geojson"');
+	geoJsonForQuery('^' + req.params.association + '/', req.query, (err, geoJson) => {
+		if (err) {
+			console.error(err);
+			res.status(500).end();
+			return;
+		}
+
+		res.json(geoJson).end();
+	});
+});
+
 router.get('/regions/:association/:region.gpx', (req, res) => {
 	res.cacheControl = {
 		noCache: true
@@ -86,6 +104,24 @@ router.get('/regions/:association/:region.kml', (req, res) => {
 		}
 
 		res.send(kml).end();
+	});
+});
+
+router.get('/regions/:association/:region.geojson', (req, res) => {
+	res.cacheControl = {
+		noCache: true
+	};
+
+	res.set('Content-Type', 'application/geo+json');
+	res.set('Content-Disposition', 'attachment; filename="' + req.params.association + '_' + req.params.region + '.geojson"');
+	geoJsonForQuery('^' + req.params.association + '/' + req.params.region + '-', req.query, (err, geoJson) => {
+		if (err) {
+			console.error(err);
+			res.status(500).end();
+			return;
+		}
+
+		res.json(geoJson).end();
 	});
 });
 
@@ -256,6 +292,43 @@ function kmlForRegion(associationCode, regionCode, options, callback) {
 
 			callback(null, kml);
 		});
+	});
+}
+
+function geoJsonForQuery(query, options, callback) {
+	let filter = {code: {$regex: query}};
+	if (!options.inactive) {
+		filter.validFrom = {$lte: new Date()};
+		filter.validTo = {$gte: new Date()};
+	}
+	db.getDb().collection('summits').find(filter).sort({code: 1}).toArray((err, summits) => {
+		if (err) {
+			callback(err);
+			return;
+		}
+
+		let features = summits.map(summit => {
+			return {
+				type: 'Feature',
+				geometry: {
+					type: 'Point',
+					coordinates: [summit.coordinates.longitude, summit.coordinates.latitude]
+				},
+				id: summit.code,
+				properties: {
+					code: summit.code,
+					name: summit.name,
+					title: summitName(summit, options)
+				}
+			}
+		})
+
+		let geojson = {
+			type: 'FeatureCollection',
+			features
+		}
+
+		callback(null, geojson);
 	});
 }
 
