@@ -11,6 +11,7 @@ const RbnReceiver = require('./rbn');
 const db = require('./db');
 const alerts = require('./alerts');
 const geoexport = require('./geoexport');
+const users = require('./users');
 const activations = require('./activations');
 const utils = require('./utils');
 const photos_router = require('./photos_router')
@@ -36,6 +37,7 @@ app.use('/ws', wsManager.router);
 app.use('/alerts', alerts);
 app.use('/geoexport', geoexport);
 app.use('/activations', activations);
+app.use('/users', users);
 app.use('/photos', photos_router);
 app.use('/tracks', tracks_router);
 
