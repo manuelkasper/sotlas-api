@@ -16,6 +16,7 @@ const activations = require('./activations');
 const utils = require('./utils');
 const photos_router = require('./photos_router')
 const tracks_router = require('./tracks_router')
+const solardata = require('./solardata')
 const maxmind = require('maxmind');
 
 let dbChecker = (req, res, next) => {
@@ -40,6 +41,7 @@ app.use('/activations', activations);
 app.use('/users', users);
 app.use('/photos', photos_router);
 app.use('/tracks', tracks_router);
+app.use('/solardata', solardata);
 
 let sotaSpotReceiver = new SotaSpotReceiver();
 let rbnReceiver = new RbnReceiver();

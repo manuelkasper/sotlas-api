@@ -47,7 +47,11 @@ class WebSocketManager extends EventEmitter {
 					return;
 				}
 				ws.isAlive = false;
-				ws.ping();
+				try {
+					ws.ping();
+				} catch (e) {
+					console.error(e);
+				}
 			}, PING_INTERVAL);
 		});
 	}

@@ -79,3 +79,7 @@ config.mail = {
 	host: "neon1.net",
 	port: 587
 };
+
+config.solardata = {
+	apiKey: 'xxxxxxxxxxxxxxxxx'
+};
