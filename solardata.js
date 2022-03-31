@@ -66,12 +66,12 @@ router.post('/:date/:hour',
 
 	db.getDb().collection('solardata').replaceOne({date: req.params.date, hour: req.params.hour}, {
 		date: req.params.date,
-		hour: req.params.hour,
-		sfi: req.body.sfi,
-		r: req.body.r,
-		a: req.body.a,
-		k: req.body.k,
-		expK: req.body.expK,
+		hour: parseInt(req.params.hour),
+		sfi: parseInt(req.body.sfi),
+		r: parseInt(req.body.r),
+		a: parseInt(req.body.a),
+		k: parseInt(req.body.k),
+		expK: parseInt(req.body.expK),
 		sa: req.body.sa,
 		gmf: req.body.gmf,
 		aurora: req.body.aurora
