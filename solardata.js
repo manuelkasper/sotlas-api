@@ -1,5 +1,6 @@
 const express = require('express')
 const {check, validationResult} = require('express-validator')
+const moment = require('moment')
 const config = require('./config')
 const db = require('./db')
 
@@ -13,11 +14,11 @@ router.get('/:date/:hour',
 
 	db.getDb().collection('solardata').findOne({date: req.params.date, hour: req.params.hour}, (err, solardata) => {
 		if (err) {
-			return res.status(500).end();
+			return res.status(500).end()
 		}
 
 		if (!solardata) {
-			return res.status(404).end();
+			return res.status(404).end()
 		}
 
 		delete solardata._id
@@ -31,13 +32,19 @@ router.get('/:date/:hour',
 router.get('/latest', (req, res) => {
 	db.getDb().collection('solardata').find().sort({date: -1, hour: -1}).limit(1).toArray((err, solardataArr) => {
 		if (err) {
-			return res.status(500).end();
+			return res.status(500).end()
 		}
 
 		let solardata = solardataArr[0]
 
 		if (!solardata) {
-			return res.status(404).end();
+			return res.status(404).end()
+		}
+
+		// Check that the data is not older than 4 hours
+		let solardataMoment = moment.utc(solardata.date + "T" + solardata.hour.toString().padStart(2, '0'))
+		if (moment.utc().diff(solardataMoment, 'hours') > 4) {
+			console.log('too old')
 		}
 
 		delete solardata._id
@@ -59,7 +66,7 @@ router.post('/:date/:hour',
 		return res.status(401).end()
 	}
 
-	const errors = validationResult(req);
+	const errors = validationResult(req)
 	if (!errors.isEmpty()) {
 		return res.status(400).json({errors: errors.array()})
 	}
