@@ -44,7 +44,7 @@ router.get('/latest', (req, res) => {
 		// Check that the data is not older than 4 hours
 		let solardataMoment = moment.utc(solardata.date + "T" + solardata.hour.toString().padStart(2, '0'))
 		if (moment.utc().diff(solardataMoment, 'hours') > 4) {
-			console.log('too old')
+			return res.status(404).end()
 		}
 
 		delete solardata._id
