@@ -7,28 +7,6 @@ const db = require('./db')
 let router = express.Router()
 module.exports = router
 
-router.get('/:date/:hour',
-	check("date").matches(/^\d\d\d\d-\d\d-\d\d$/),
-	check("hour").isInt({gt: -1, lt: 24}),
-	(req, res) => {
-
-	db.getDb().collection('solardata').findOne({date: req.params.date, hour: req.params.hour}, (err, solardata) => {
-		if (err) {
-			return res.status(500).end()
-		}
-
-		if (!solardata) {
-			return res.status(404).end()
-		}
-
-		delete solardata._id
-		delete solardata.date
-		delete solardata.hour
-
-		return res.json(solardata)
-	})
-})
-
 router.get('/latest', (req, res) => {
 	db.getDb().collection('solardata').find().sort({date: -1, hour: -1}).limit(1).toArray((err, solardataArr) => {
 		if (err) {
@@ -44,6 +22,44 @@ router.get('/latest', (req, res) => {
 		// Check that the data is not older than 4 hours
 		let solardataMoment = moment.utc(solardata.date + "T" + solardata.hour.toString().padStart(2, '0'))
 		if (moment.utc().diff(solardataMoment, 'hours') > 4) {
+			return res.status(404).end()
+		}
+
+		delete solardata._id
+		delete solardata.date
+		delete solardata.hour
+
+		return res.json(solardata)
+	})
+})
+
+router.get('/history/:hours',
+	check("hours").isInt({gt: 0, lt: 1000}),
+	(req, res) => {
+	db.getDb().collection('solardata').find().sort({date: -1, hour: -1}).limit(parseInt(req.params.hours)).toArray((err, solardataArr) => {
+		if (err) {
+			return res.status(500).end()
+		}
+
+		for (let solardata of solardataArr) {
+			delete solardata._id
+		}
+
+		return res.json(solardataArr)
+	})
+})
+
+router.get('/:date/:hour',
+	check("date").matches(/^\d\d\d\d-\d\d-\d\d$/),
+	check("hour").isInt({gt: -1, lt: 24}),
+	(req, res) => {
+
+	db.getDb().collection('solardata').findOne({date: req.params.date, hour: req.params.hour}, (err, solardata) => {
+		if (err) {
+			return res.status(500).end()
+		}
+
+		if (!solardata) {
 			return res.status(404).end()
 		}
 
