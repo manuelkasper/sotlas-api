@@ -16,7 +16,9 @@ class SotaSpotReceiver {
 			});
 			wsManager.unicast({spots}, ws);
 		})
+	}
 
+	start() {
 		this.loadSpots();
 		setInterval(() => {
 			this.loadSpots();

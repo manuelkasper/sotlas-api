@@ -5,7 +5,7 @@ const assert = require('assert');
 let db = null
 let client
 const connectPromise = new Promise((resolve, reject) => {
-  client = new MongoClient(config.mongodb.url, {useUnifiedTopology: true})
+  client = new MongoClient(config.mongodb.url)
   client.connect(function (err) {
     assert.equal(null, err)
     db = client.db(config.mongodb.dbName)

@@ -14,10 +14,20 @@ const geoexport = require('./geoexport');
 const users = require('./users');
 const activations = require('./activations');
 const utils = require('./utils');
-const photos_router = require('./photos_router')
-const tracks_router = require('./tracks_router')
-const solardata = require('./solardata')
-const maxmind = require('maxmind')
+const photos_router = require('./photos_router');
+const tracks_router = require('./tracks_router');
+const solardata = require('./solardata');
+const maxmind = require('maxmind');
+
+let geoLookup;
+import('geolite2-redist').then((geolite2) => {
+	return geolite2.open(
+		'GeoLite2-City',
+		(dbPath) => maxmind.open(dbPath)
+	)
+}).then((reader) => {
+	geoLookup = reader;
+});
 
 let dbChecker = (req, res, next) => {
 	if (db.getDb() == null) {
@@ -43,9 +53,12 @@ app.use('/photos', photos_router);
 app.use('/tracks', tracks_router);
 app.use('/solardata', solardata);
 
-let sotaSpotReceiver = new SotaSpotReceiver();
-let rbnReceiver = new RbnReceiver();
-rbnReceiver.start();
+db.waitDb(() => {
+	let sotaSpotReceiver = new SotaSpotReceiver();
+	sotaSpotReceiver.start();
+	let rbnReceiver = new RbnReceiver();
+	rbnReceiver.start();
+})
 
 app.get('/summits/search', (req, res) => {
 	let limit = 100;
@@ -277,19 +290,6 @@ app.get('/activators/:callsign', (req, res) => {
 	});
 });
 
-let geoLookup;
-import('geolite2-redist').then((geolite2) => {
-	return geolite2.open(
-		'GeoLite2-City',
-		(dbPath) => maxmind.open(dbPath)
-	)
-}).then((reader) => {
-	geoLookup = reader
-})
-
-maxmind.open(config.geoip.path).then((lookup) => {
-	geoLookup = lookup;
-});
 app.get('/map_server', (req, res) => {
 	let mapServer = 'us';
 	let geo = geoLookup.get(req.ip);
