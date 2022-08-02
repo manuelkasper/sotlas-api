@@ -2,7 +2,7 @@ var config = {};
 module.exports = config;
 
 config.http = {
-	host: '127.0.0.1',
+	host: undefined,
 	port: 8081
 };
 
