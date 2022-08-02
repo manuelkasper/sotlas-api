@@ -35,10 +35,6 @@ config.rbn = {
 	maxSpotHistory: 1000
 };
 
-config.geoip = {
-	path: 'GeoLite2-City.mmdb'
-};
-
 config.summitListUrl = 'https://www.sotadata.org.uk/summitslist.csv';
 
 config.sotatrailsUrl = 'https://sotatrails.ch/api.php';

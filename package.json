@@ -22,6 +22,7 @@
     "express-jwt": "^5.3.1",
     "express-validator": "^6.10.0",
     "express-ws": "^4.0.0",
+    "geolite2-redist": "^3.0.2",
     "hasha": "^5.1.0",
     "htmlparser2": "^3.10.1",
     "jwks-rsa": "^1.6.0",

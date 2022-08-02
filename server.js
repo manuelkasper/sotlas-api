@@ -17,7 +17,7 @@ const utils = require('./utils');
 const photos_router = require('./photos_router')
 const tracks_router = require('./tracks_router')
 const solardata = require('./solardata')
-const maxmind = require('maxmind');
+const maxmind = require('maxmind')
 
 let dbChecker = (req, res, next) => {
 	if (db.getDb() == null) {
@@ -278,6 +278,15 @@ app.get('/activators/:callsign', (req, res) => {
 });
 
 let geoLookup;
+import('geolite2-redist').then((geolite2) => {
+	return geolite2.open(
+		'GeoLite2-City',
+		(dbPath) => maxmind.open(dbPath)
+	)
+}).then((reader) => {
+	geoLookup = reader
+})
+
 maxmind.open(config.geoip.path).then((lookup) => {
 	geoLookup = lookup;
 });
