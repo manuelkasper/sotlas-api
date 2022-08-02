@@ -5,6 +5,8 @@ const fsPromises = require('fs').promises
 const exif = require('exif-reader')
 const path = require('path')
 const hasha = require('hasha')
+const minio = require('minio')
+const nodemailer = require('nodemailer')
 const config = require('./config')
 const db = require('./db')
 
@@ -13,15 +15,27 @@ module.exports = {
     // Hash input file to determine filename
     let hash = await hasha.fromFile(filename, {algorithm: 'sha256'})
     let hashFilename = hash.substr(0, 32) + '.jpg'
-    let originalPath = config.photos.paths.original + '/' + hashFilename.substr(0, 2) + '/' + hashFilename
-    await fsPromises.mkdir(path.dirname(originalPath), {recursive: true})
 
     let metadata = await getMetadata(filename)
     if (metadata.format !== 'jpeg' && metadata.format != 'png' && metadata.format != 'heif') {
       throw new Error('Bad input format, must be JPEG, PNG or HEIF')
     }
 
-    await fsPromises.copyFile(filename, originalPath)
+    // Upload original photo to Backblaze (don't wait for completion)
+    let minioClient = new minio.Client(config.photos.originalStorage)
+    minioClient.fPutObject('sotlas', hashFilename, filename, {'Content-Type': 'image/jpeg'}, (err, etag) => {
+      if (err) {
+        console.error(err)
+
+        let transporter = nodemailer.createTransport(config.mail)
+        transporter.sendMail({
+          from: 'api@sotl.as',
+          to: 'mk@neon1.net',
+          subject: 'Backblaze upload failed',
+          text: `The file ${filename} could not be uploaded:\n${err}`
+        })
+      }
+    })
 
     let photo = {
       filename: hashFilename,
@@ -84,7 +98,7 @@ module.exports = {
     Object.keys(config.photos.sizes).forEach(sizeDescr => {
       let outPath = config.photos.paths[sizeDescr] + '/' + hashFilename.substr(0, 2) + '/' + hashFilename
       mkdirTasks.push(fsPromises.mkdir(path.dirname(outPath), {recursive: true}))
-      resizeTasks.push(makeResized(originalPath, outPath, config.photos.sizes[sizeDescr].width, config.photos.sizes[sizeDescr].height))
+      resizeTasks.push(makeResized(filename, outPath, config.photos.sizes[sizeDescr].width, config.photos.sizes[sizeDescr].height))
     })
 
     await Promise.all(mkdirTasks)

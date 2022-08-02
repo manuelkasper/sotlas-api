@@ -45,7 +45,6 @@ config.sotatrailsUrl = 'https://sotatrails.ch/api.php';
 
 config.photos = {
 	paths: {
-		original: '/data/images/photos/original',
 		thumb: '/data/images/photos/thumb',
 		large: '/data/images/photos/large'
 	},
@@ -59,7 +58,12 @@ config.photos = {
 			height: 256
 		}
 	},
-	uploadPath: '/data/upload/photos'
+	uploadPath: '/data/upload/photos',
+	originalStorage: {
+		endPoint: 's3.eu-central-003.backblazeb2.com',
+    	accessKey: 'xxxxxxxxxxxxxxxxx',
+    	secretKey: 'xxxxxxxxxxxxxxxxx'
+	}
 };
 
 config.tracks = {
