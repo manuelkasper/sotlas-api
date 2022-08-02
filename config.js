@@ -58,7 +58,7 @@ config.photos = {
 			height: 256
 		}
 	},
-	uploadPath: '/data/upload/photos',
+	uploadPath: '/tmp/upload/photos',
 	originalStorage: {
 		endPoint: 's3.eu-central-003.backblazeb2.com',
     	accessKey: process.env.B2_ACCESS_KEY,
@@ -72,7 +72,7 @@ config.tracks = {
 		simple: '/data/tracks/simple'
 	},
 	tolerance: 0.00001,
-	uploadPath: '/data/upload/tracks'
+	uploadPath: '/tmp/upload/tracks'
 };
 
 config.sso = {
