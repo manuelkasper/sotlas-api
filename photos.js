@@ -23,7 +23,7 @@ module.exports = {
 
     // Upload original photo to Backblaze (don't wait for completion)
     let minioClient = new minio.Client(config.photos.originalStorage)
-    minioClient.fPutObject('sotlas', hashFilename, filename, {'Content-Type': 'image/jpeg'}, (err, etag) => {
+    minioClient.fPutObject('sotlas-photos', 'original/' + hashFilename, filename, {'Content-Type': 'image/jpeg'}, (err, etag) => {
       if (err) {
         console.error(err)
 
