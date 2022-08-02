@@ -7,8 +7,8 @@ config.http = {
 };
 
 config.mongodb = {
-	url: 'mongodb://sotlas:XXXXXXXX@localhost:27017/sotlas',
-	dbName: 'sotlas',
+	url: process.env.MONGODB_URL,
+	dbName: process.env.MONGODB_DBNAME,
 	batchSize: 1000
 };
 
@@ -61,8 +61,8 @@ config.photos = {
 	uploadPath: '/data/upload/photos',
 	originalStorage: {
 		endPoint: 's3.eu-central-003.backblazeb2.com',
-    	accessKey: 'xxxxxxxxxxxxxxxxx',
-    	secretKey: 'xxxxxxxxxxxxxxxxx'
+    	accessKey: process.env.B2_ACCESS_KEY,
+    	secretKey: process.env.B2_SECRET_KEY
 	}
 };
 
@@ -80,10 +80,10 @@ config.sso = {
 };
 
 config.mail = {
-	host: "neon1.net",
-	port: 587
+	host: process.env.MAIL_HOST,
+	port: process.env.MAIL_PORT
 };
 
 config.solardata = {
-	apiKey: 'xxxxxxxxxxxxxxxxx'
+	apiKey: process.env.SOLARDATA_API_KEY
 };
