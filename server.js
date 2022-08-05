@@ -247,13 +247,14 @@ app.get('/activators/search', (req, res) => {
 	if (req.query.q !== undefined && req.query.q !== '') {
 		query = {callsign: {'$regex': req.query.q, '$options': 'i'}};
 	}
-	let cursor = db.getDb().collection('activators').find(query, {projection: {'_id': false}}).sort(sort);
-	cursor.count((err, count) => {
+
+	db.getDb().collection('activators').countDocuments(query, (err, count) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();
 			return;
 		}
+		let cursor = db.getDb().collection('activators').find(query, {projection: {'_id': false}}).sort(sort);
 
 		cursor.skip(skip).limit(limit).toArray((err, activators) => {
 			res.json({activators, total: count});
