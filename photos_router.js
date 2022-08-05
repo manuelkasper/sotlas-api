@@ -53,20 +53,6 @@ router.post('/summits/:association/:code/upload', jwtCallback, upload.array('pho
 
       if (dbPhotos.length > 0) {
         await db.getDb().collection('summits').updateOne({code: summitCode}, { $push: { photos: { $each: dbPhotos } } })
-
-        let transporter = nodemailer.createTransport(config.mail)
-        transporter.sendMail({
-          from: 'api@sotl.as',
-          to: 'mk@neon1.net',
-          subject: 'New photos added to summit ' + summitCode + ' by ' + req.user.callsign,
-          text: `${dbPhotos.length} new photos have been added. https://sotl.as/summits/${summitCode}\n`,
-          attachments: dbPhotos.map(photo => {
-            return {
-              filename: photo.filename,
-              path: config.photos.paths.thumb + '/' + photo.filename.substr(0, 2) + '/' + photo.filename
-            }
-          })
-        })
       }
 
       res.json(dbPhotos)

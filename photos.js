@@ -22,20 +22,10 @@ module.exports = {
     }
 
     // Upload original photo to Backblaze (don't wait for completion)
-    let minioClient = new minio.Client(config.photos.originalStorage)
-    minioClient.fPutObject('sotlas-photos', 'original/' + hashFilename, filename, {'Content-Type': 'image/jpeg'}, (err, etag) => {
-      if (err) {
-        console.error(err)
-
-        let transporter = nodemailer.createTransport(config.mail)
-        transporter.sendMail({
-          from: 'api@sotl.as',
-          to: 'mk@neon1.net',
-          subject: 'Backblaze upload failed',
-          text: `The file ${filename} could not be uploaded:\n${err}`
-        })
-      }
-    })
+    fsPromises.readFile(filename)
+      .then(buffer => {
+        uploadToCloud(config.photos.originalStorage, 'original/' + hashFilename, buffer)
+      })
 
     let photo = {
       filename: hashFilename,
@@ -93,16 +83,17 @@ module.exports = {
       }
     }
 
-    let mkdirTasks = []
-    let resizeTasks = []
+    let tasks = []
     Object.keys(config.photos.sizes).forEach(sizeDescr => {
-      let outPath = config.photos.paths[sizeDescr] + '/' + hashFilename.substr(0, 2) + '/' + hashFilename
-      mkdirTasks.push(fsPromises.mkdir(path.dirname(outPath), {recursive: true}))
-      resizeTasks.push(makeResized(filename, outPath, config.photos.sizes[sizeDescr].width, config.photos.sizes[sizeDescr].height))
+      tasks.push(
+        makeResized(filename, config.photos.sizes[sizeDescr].width, config.photos.sizes[sizeDescr].height)
+          .then(buffer => {
+            return uploadToCloud(config.photos.storage, sizeDescr + '/' + hashFilename, buffer)
+          })
+      )
     })
 
-    await Promise.all(mkdirTasks)
-    await Promise.all(resizeTasks)
+    await Promise.all(tasks)
 
     db.getDb().collection('uploads').insertOne({
       uploadDate: new Date(),
@@ -115,10 +106,30 @@ module.exports = {
   }
 }
 
+function uploadToCloud(storageConfig, targetPath, buffer) {
+  let minioClient = new minio.Client(storageConfig)
+  let metadata = {
+    'Content-Type': 'image/jpeg',
+    'x-amz-acl': 'public-read'
+  }
+  return minioClient.putObject(storageConfig.bucketName, targetPath, buffer, metadata)
+    .catch(err => {
+      console.error(err)
+
+      let transporter = nodemailer.createTransport(config.mail)
+      transporter.sendMail({
+        from: 'api@sotl.as',
+        to: 'mk@neon1.net',
+        subject: 'Cloud photo upload failed',
+        text: `The file ${filename} could not be uploaded to ${storageConfig.endpoint} at path ${targetPath}:\n${err}`
+      })
+    })
+}
+
 function getMetadata(src) {
   return sharp(src).metadata()
 }
 
-function makeResized(src, dst, maxWidth, maxHeight) {
-  return sharp(src).rotate().resize({ height: maxHeight, width: maxWidth, fit: 'inside' }).toFile(dst)
+function makeResized(src, maxWidth, maxHeight) {
+  return sharp(src).rotate().resize({ height: maxHeight, width: maxWidth, fit: 'inside' }).toBuffer()
 }

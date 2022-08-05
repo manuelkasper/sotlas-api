@@ -40,10 +40,6 @@ config.summitListUrl = 'https://www.sotadata.org.uk/summitslist.csv';
 config.sotatrailsUrl = 'https://sotatrails.ch/api.php';
 
 config.photos = {
-	paths: {
-		thumb: '/data/images/photos/thumb',
-		large: '/data/images/photos/large'
-	},
 	sizes: {
 		large: {
 			width: 1600,
@@ -58,7 +54,14 @@ config.photos = {
 	originalStorage: {
 		endPoint: 's3.eu-central-003.backblazeb2.com',
     	accessKey: process.env.B2_ACCESS_KEY,
-    	secretKey: process.env.B2_SECRET_KEY
+    	secretKey: process.env.B2_SECRET_KEY,
+    	bucketName: 'sotlas-photos'
+	},
+	storage: {
+		endPoint: 'fra1.digitaloceanspaces.com',
+		accessKey: process.env.SPACES_ACCESS_KEY,
+		secretKey: process.env.SPACES_SECRET_KEY,
+    	bucketName: 'sotlas-photos'
 	}
 };
 
