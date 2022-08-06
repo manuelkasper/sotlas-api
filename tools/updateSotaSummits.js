@@ -1,141 +1,133 @@
-const request = require('request');
+const axios = require('axios');
 const MongoClient = require('mongodb').MongoClient;
 const config = require('../config');
 const assert = require('assert');
-const parse = require('csv-parse');
+const {parse} = require('csv-parse/sync');
 const fs = require('fs');
 const removeDiacritics = require('diacritics').remove;
 
-const client = new MongoClient(config.mongodb.url, {useUnifiedTopology: true});
+const client = new MongoClient(config.mongodb.url);
 client.connect(function (err) {
 	assert.equal(null, err);
 	
 	processSummitList(client.db(config.mongodb.dbName));
 });
 
-function processSummitList(db) {
+async function processSummitList(db) {
 	let associations = new Map();
 	let now = new Date();
 
-	let prefixToIsoCode = [];
-	parse(fs.readFileSync(__dirname + '/isocodes.txt'), function(err, isocodes) {
-		assert.equal(err, null);
-		prefixToIsoCode = isocodes;
-	});
+	let prefixToIsoCode = parse(fs.readFileSync(__dirname + '/isocodes.txt'));
 	
-	request(config.summitListUrl, (error, response, body) => {
-		assert.equal(error, null);
+	let response = await axios.get(config.summitListUrl);
+	let body = response.data.substring(response.data.indexOf("\n")+1, response.data.length);
+
+	let summits = parse(body, {columns: true, relax_column_count: true});
+	
+	if (summits.length < 100000) {
+		console.error("Bad number of summits, expecting more than 100000");
+		client.close();
+		return;
+	}
+
+	let bulkWrites = [];
+	for (let summit of summits) {
+		summit.SummitCode = summit.SummitCode.trim();	//anomaly GW/NW-003
+		summit.ValidFrom = dateToMongo(summit.ValidFrom);
+		summit.ValidTo = dateToMongo(summit.ValidTo, true);
+		if (summit.ActivationDate) {
+			summit.ActivationDate = dateToMongo(summit.ActivationDate);
+		} else {
+			summit.ActivationDate = null;
+			summit.ActivationCall = null;
+		}
+
+		bulkWrites.push({updateOne: {
+			filter: {code: summit.SummitCode},
+			update: { $set: {
+				code: summit.SummitCode,
+				name: summit.SummitName,
+				nameNd: removeDiacritics(summit.SummitName),
+				altitude: parseInt(summit.AltM),
+				points: parseInt(summit.Points),
+				bonusPoints: parseInt(summit.BonusPoints),
+				coordinates: {
+					longitude: Number(parseFloat(summit.Longitude).toFixed(5)),
+					latitude: Number(parseFloat(summit.Latitude).toFixed(5))
+				},
+				validFrom: summit.ValidFrom,
+				validTo: summit.ValidTo,
+				activationCount: parseInt(summit.ActivationCount),
+				activationCall: summit.ActivationCall,
+				activationDate: summit.ActivationDate
+			}},
+			upsert: true
+		}});
+
+		if (bulkWrites.length >= config.mongodb.batchSize) {
+			await db.collection('summits').bulkWrite(bulkWrites);
+			bulkWrites = [];
+		}
+
+		let SummitAssociation = getAssociation(summit.SummitCode);
+		let SummitRegion = getRegion(summit.SummitCode);
 		
-		body = body.substring(body.indexOf("\n")+1, body.length);
-		
-		parse(body, {columns: true, relax_column_count: true}, function(err, summits) {
-			assert.equal(err, null);
-			
-			if (summits.length < 100000) {
-				console.error("Bad number of summits, expecting more than 100000");
-				client.close();
-				return;
-			}
+		let isValid = (summit.ValidFrom <= now && summit.ValidTo >= now);
+		let association = associations.get(SummitAssociation);
+		if (!association) {
+			let info = isoCodeForPrefix(SummitAssociation, prefixToIsoCode)
+			association = {code: SummitAssociation, name: summit.AssociationName, isoCode: info.isoCode, continent: info.continent, regions: new Map(), summitCount: 0};
+			associations.set(SummitAssociation, association);
+		}
+		let region = association.regions.get(SummitRegion);
+		if (!region) {
+			region = {code: SummitRegion, name: summit.RegionName, summitCount: 0};
+			association.regions.set(SummitRegion, region);
+		}
+		if (isValid) {
+			association.summitCount++;
+			region.summitCount++;
+		}
 
-			let bulkWrites = [];
-			for (let summit of summits) {
-				summit.SummitCode = summit.SummitCode.trim();	//anomaly GW/NW-003
-				summit.ValidFrom = dateToMongo(summit.ValidFrom);
-				summit.ValidTo = dateToMongo(summit.ValidTo, true);
-				if (summit.ActivationDate) {
-					summit.ActivationDate = dateToMongo(summit.ActivationDate);
-				} else {
-					summit.ActivationDate = null;
-					summit.ActivationCall = null;
-				}
+		let lat = parseFloat(summit.Latitude);
+		let lon = parseFloat(summit.Longitude);
 
-				bulkWrites.push({updateOne: {
-					filter: {code: summit.SummitCode},
-					update: { $set: {
-						code: summit.SummitCode,
-						name: summit.SummitName,
-						nameNd: removeDiacritics(summit.SummitName),
-						altitude: parseInt(summit.AltM),
-						points: parseInt(summit.Points),
-						bonusPoints: parseInt(summit.BonusPoints),
-						coordinates: {
-							longitude: Number(parseFloat(summit.Longitude).toFixed(5)),
-							latitude: Number(parseFloat(summit.Latitude).toFixed(5))
-						},
-						validFrom: summit.ValidFrom,
-						validTo: summit.ValidTo,
-						activationCount: parseInt(summit.ActivationCount),
-						activationCall: summit.ActivationCall,
-						activationDate: summit.ActivationDate
-					}},
-					upsert: true
-				}});
+		if (!region.bounds) {
+			region.bounds = [[lon, lat], [lon, lat]];
+		} else {
+			region.bounds[0][0] = Math.min(region.bounds[0][0], lon);
+			region.bounds[0][1] = Math.min(region.bounds[0][1], lat);
+			region.bounds[1][0] = Math.max(region.bounds[1][0], lon);
+			region.bounds[1][1] = Math.max(region.bounds[1][1], lat);
+		}
 
-				if (bulkWrites.length >= config.mongodb.batchSize) {
-					db.collection('summits').bulkWrite(bulkWrites);
-					bulkWrites = [];
-				}
+		if (!association.bounds) {
+			association.bounds = [[lon, lat], [lon, lat]];
+		} else {
+			association.bounds[0][0] = Math.min(association.bounds[0][0], lon);
+			association.bounds[0][1] = Math.min(association.bounds[0][1], lat);
+			association.bounds[1][0] = Math.max(association.bounds[1][0], lon);
+			association.bounds[1][1] = Math.max(association.bounds[1][1], lat);
+		}
+	}
 
-				let SummitAssociation = getAssociation(summit.SummitCode);
-				let SummitRegion = getRegion(summit.SummitCode);
-				
-				let isValid = (summit.ValidFrom <= now && summit.ValidTo >= now);
-				let association = associations.get(SummitAssociation);
-				if (!association) {
-					let info = isoCodeForPrefix(SummitAssociation, prefixToIsoCode)
-					association = {code: SummitAssociation, name: summit.AssociationName, isoCode: info.isoCode, continent: info.continent, regions: new Map(), summitCount: 0};
-					associations.set(SummitAssociation, association);
-				}
-				let region = association.regions.get(SummitRegion);
-				if (!region) {
-					region = {code: SummitRegion, name: summit.RegionName, summitCount: 0};
-					association.regions.set(SummitRegion, region);
-				}
-				if (isValid) {
-					association.summitCount++;
-					region.summitCount++;
-				}
+	if (bulkWrites.length > 0) {
+		await db.collection('summits').bulkWrite(bulkWrites);
+	}
 
-				let lat = parseFloat(summit.Latitude);
-				let lon = parseFloat(summit.Longitude);
-
-				if (!region.bounds) {
-					region.bounds = [[lon, lat], [lon, lat]];
-				} else {
-					region.bounds[0][0] = Math.min(region.bounds[0][0], lon);
-					region.bounds[0][1] = Math.min(region.bounds[0][1], lat);
-					region.bounds[1][0] = Math.max(region.bounds[1][0], lon);
-					region.bounds[1][1] = Math.max(region.bounds[1][1], lat);
-				}
-
-				if (!association.bounds) {
-					association.bounds = [[lon, lat], [lon, lat]];
-				} else {
-					association.bounds[0][0] = Math.min(association.bounds[0][0], lon);
-					association.bounds[0][1] = Math.min(association.bounds[0][1], lat);
-					association.bounds[1][0] = Math.max(association.bounds[1][0], lon);
-					association.bounds[1][1] = Math.max(association.bounds[1][1], lat);
-				}
-			}
-
-			if (bulkWrites.length > 0) {
-				db.collection('summits').bulkWrite(bulkWrites);
-			}
-			
-			for (let association of associations.values()) {
-				association.regions = [...association.regions.values()];
-			}
-			
-			let associationCollection = db.collection('associations');
-			associationCollection.deleteMany({}, () => {
-				associationCollection.insertMany([...associations.values()], (err, r) => {
-					if (err)
-						console.error(err);
-					client.close();
-				});
-			});
-		});
+	// Update associations	
+	for (let association of associations.values()) {
+		association.regions = [...association.regions.values()];
+	}
+	
+	let session = client.startSession();
+	await session.withTransaction(async () => {
+		let associationCollection = db.collection('associations');
+		await associationCollection.deleteMany({}, { session });
+		await associationCollection.insertMany([...associations.values()], { session });
 	});
+	session.endSession();
+	client.close();
 }
 
 function dateToMongo(date, endOfDay = false) {
