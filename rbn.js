@@ -13,7 +13,7 @@ class RbnReceiver {
 
 		wsManager.on('message', (ws, message) => {
 			if (message.rbnFilter !== undefined) {
-				console.log("Set RBN filter to " + JSON.stringify(message.rbnFilter));
+				//console.log("Set RBN filter to " + JSON.stringify(message.rbnFilter));
 				ws.rbnFilter = message.rbnFilter;
 
 				this.sendSpotHistory(ws)

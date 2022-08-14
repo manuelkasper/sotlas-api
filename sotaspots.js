@@ -30,7 +30,7 @@ class SotaSpotReceiver {
 		if (this.latestSpots.getLength() == 0) {
 			numSpotsToLoad = config.sotaspots.initialLoadSpots;
 		}
-		console.log(`load ${numSpotsToLoad} spots`);
+		console.log(`Load ${numSpotsToLoad} spots`);
 		axios.get(config.sotaspots.url + '/' + numSpotsToLoad + '/all')
 			.then(response => {
 				let minSpotId = undefined;

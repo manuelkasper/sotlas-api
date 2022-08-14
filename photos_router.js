@@ -4,7 +4,6 @@ const config = require('./config')
 const photos = require('./photos')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
-const nodemailer = require('nodemailer')
 const db = require('./db')
 
 let upload = multer({dest: config.photos.uploadPath})

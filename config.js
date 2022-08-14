@@ -78,11 +78,6 @@ config.sso = {
 	jwksUri: 'https://sso.sota.org.uk/auth/realms/SOTA/protocol/openid-connect/certs'
 };
 
-config.mail = {
-	host: process.env.MAIL_HOST,
-	port: process.env.MAIL_PORT
-};
-
 config.solardata = {
 	apiKey: process.env.SOLARDATA_API_KEY
 };

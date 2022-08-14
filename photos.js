@@ -6,7 +6,6 @@ const exif = require('exif-reader')
 const path = require('path')
 const hasha = require('hasha')
 const minio = require('minio')
-const nodemailer = require('nodemailer')
 const config = require('./config')
 const db = require('./db')
 
@@ -114,15 +113,7 @@ function uploadToCloud(storageConfig, targetPath, buffer) {
   }
   return minioClient.putObject(storageConfig.bucketName, targetPath, buffer, metadata)
     .catch(err => {
-      console.error(err)
-
-      let transporter = nodemailer.createTransport(config.mail)
-      transporter.sendMail({
-        from: 'api@sotl.as',
-        to: 'mk@neon1.net',
-        subject: 'Cloud photo upload failed',
-        text: `The file ${filename} could not be uploaded to ${storageConfig.endpoint} at path ${targetPath}:\n${err}`
-      })
+      console.error('Cloud photo upload failed: ' + err)
     })
 }
 

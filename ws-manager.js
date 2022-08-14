@@ -11,7 +11,7 @@ class WebSocketManager extends EventEmitter {
 		this.router = express.Router();
 
 		this.router.ws('/', (ws, req) => {
-			console.log('WebSocket client connected');
+			//console.log('WebSocket client connected');
 			ws.isAlive = true;
 			this.webSocketClients.add(ws);
 			console.log("Number of clients: " + this.webSocketClients.size);
@@ -28,7 +28,7 @@ class WebSocketManager extends EventEmitter {
 				ws.isAlive = true;
 			});
 			ws.on('close', () => {
-				console.log("WebSocket closed");
+				//console.log("WebSocket closed");
 				clearInterval(ws.pingInterval);
 				this.webSocketClients.delete(ws);
 				console.log("Number of clients: " + this.webSocketClients.size);
@@ -42,7 +42,7 @@ class WebSocketManager extends EventEmitter {
 
 			ws.pingInterval = setInterval(() => {
 				if (!ws.isAlive) {
-					console.log("WebSocket ping timeout");
+					//console.log("WebSocket ping timeout");
 					ws.terminate();
 					return;
 				}

@@ -27,7 +27,7 @@ router.get('/', (req, res) => {
 
 function loadAlerts(noCache) {
 	if (noCache) {
-		console.log('load alerts (no cache)');
+		console.log('Load alerts (no cache)');
 		return loadAlertsDirect();
 	}
 
@@ -36,7 +36,7 @@ function loadAlerts(noCache) {
 	}
 
 	if (!pendingLoad) {
-		console.log('load alerts (cache)');
+		console.log('Load alerts (cache)');
 		pendingLoad = loadAlertsDirect()
 			.then(response => {
 				pendingLoad = null;
