@@ -18,6 +18,7 @@ const photos_router = require('./photos_router');
 const tracks_router = require('./tracks_router');
 const solardata = require('./solardata');
 const maxmind = require('maxmind');
+const cronjobs = require('./cronjobs');
 
 let geoLookup;
 import('geolite2-redist').then((geolite2) => {
@@ -59,6 +60,8 @@ db.waitDb(() => {
 	let rbnReceiver = new RbnReceiver();
 	rbnReceiver.start();
 })
+
+cronjobs();
 
 app.get('/summits/search', (req, res) => {
 	let limit = 100;
@@ -258,6 +261,7 @@ app.get('/activators/search', (req, res) => {
 
 		cursor.skip(skip).limit(limit).toArray((err, activators) => {
 			res.json({activators, total: count});
+			cursor.close();
 		});
 	});
 });

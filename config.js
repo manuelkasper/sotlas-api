@@ -81,3 +81,18 @@ config.sso = {
 config.solardata = {
 	apiKey: process.env.SOLARDATA_API_KEY
 };
+
+config.cronjobs = [
+	{
+		script: 'importActivators',
+		schedule: '10 2 * * *'
+	},
+	{
+		script: 'updateSotaSummits',
+		schedule: '20 4 * * *'
+	},
+	{
+		script: 'updateSotaTrails',
+		schedule: '30 2 * * *'
+	}
+];
