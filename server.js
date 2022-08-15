@@ -296,6 +296,10 @@ app.get('/activators/:callsign', (req, res) => {
 });
 
 app.get('/map_server', (req, res) => {
+	if (!geoLookup) {
+		res.status(503).end();
+		return;
+	}
 	let mapServer = 'us';
 	let geo = geoLookup.get(req.ip);
 	if (geo.continent.code === 'AF' || geo.continent.code === 'EU') {
@@ -305,6 +309,10 @@ app.get('/map_server', (req, res) => {
 });
 
 app.get('/my_coordinates', (req, res) => {
+	if (!geoLookup) {
+		res.status(503).end();
+		return;
+	}
 	let geo = geoLookup.get(req.ip);
 	if (!geo) {
 		res.json({});
@@ -314,6 +322,10 @@ app.get('/my_coordinates', (req, res) => {
 });
 
 app.get('/my_country', (req, res) => {
+	if (!geoLookup) {
+		res.status(503).end();
+		return;
+	}
 	let geo = geoLookup.get(req.ip);
 	if (!geo) {
 		res.json({});
