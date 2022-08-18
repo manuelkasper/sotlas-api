@@ -94,5 +94,9 @@ config.cronjobs = [
 	{
 		script: 'updateSotaTrails',
 		schedule: '30 2 * * *'
+	},
+	{
+		script: 'deleteUnusedPhotos',
+		schedule: '10 3 * * *'
 	}
 ];
