@@ -113,7 +113,11 @@ function uploadToCloud(storageConfig, targetPath, buffer) {
   }
   return minioClient.putObject(storageConfig.bucketName, targetPath, buffer, metadata)
     .catch(err => {
-      console.error('Cloud photo upload failed: ' + err)
+      // Try again
+      return minioClient.putObject(storageConfig.bucketName, targetPath, buffer, metadata)
+        .catch(err => {
+          console.error('[ALERT] Cloud photo upload failed: ' + err)
+        })
     })
 }
 

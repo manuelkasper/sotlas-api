@@ -9,7 +9,7 @@ module.exports = () => {
 			const start = Date.now()
 			const child = child_process.fork('jobs/' + cronjob.script)
 			child.on('error', err => {
-				console.error(`Job '${cronjob.script}' failed: ${err}`)
+				console.error(`[ALERT] Job '${cronjob.script}' failed: ${err}`)
 			})
 			child.on('close', code => {
 				const end = Date.now()
