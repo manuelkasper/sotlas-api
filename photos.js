@@ -6,6 +6,7 @@ const exif = require('exif-reader')
 const path = require('path')
 const hasha = require('hasha')
 const minio = require('minio')
+const promiseRetry = require('promise-retry')
 const config = require('./config')
 const db = require('./db')
 
@@ -23,7 +24,12 @@ module.exports = {
     // Upload original photo to Backblaze (don't wait for completion)
     fsPromises.readFile(filename)
       .then(buffer => {
-        uploadToCloud(config.photos.originalStorage, 'original/' + hashFilename, buffer)
+        promiseRetry((retry, number) => {
+          return uploadToCloud(config.photos.originalStorage, 'original/' + hashFilename, buffer).catch(retry)
+        }, {retries: 5})
+        .catch(() => {
+          console.error(`[ALERT] Cloud photo original upload failed for ${filename}`)
+        })
       })
 
     let photo = {
@@ -87,7 +93,9 @@ module.exports = {
       tasks.push(
         makeResized(filename, config.photos.sizes[sizeDescr].width, config.photos.sizes[sizeDescr].height)
           .then(buffer => {
-            return uploadToCloud(config.photos.storage, sizeDescr + '/' + hashFilename, buffer)
+            return promiseRetry((retry, number) => {
+              return uploadToCloud(config.photos.storage, sizeDescr + '/' + hashFilename, buffer).catch(retry)
+            }, {retries: 2})
           })
       )
     })
@@ -112,13 +120,6 @@ function uploadToCloud(storageConfig, targetPath, buffer) {
     'x-amz-acl': 'public-read'
   }
   return minioClient.putObject(storageConfig.bucketName, targetPath, buffer, metadata)
-    .catch(err => {
-      // Try again
-      return minioClient.putObject(storageConfig.bucketName, targetPath, buffer, metadata)
-        .catch(err => {
-          console.error('[ALERT] Cloud photo upload failed: ' + err)
-        })
-    })
 }
 
 function getMetadata(src) {
