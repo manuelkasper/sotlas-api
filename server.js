@@ -138,6 +138,10 @@ app.get('/summits/recent_photos/:associations/:days', (req, res) => {
 });
 
 app.get('/summits/:association/:code', (req, res) => {
+	res.cacheControl = {
+		noCache: true
+	};
+	
 	db.getDb().collection('summits').findOne({code: req.params.association + '/' + req.params.code}, {projection: {'_id': false}}, (err, summit) => {
 		if (err) {
 			console.error(err);
