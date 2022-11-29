@@ -123,9 +123,9 @@ function uploadToCloud(storageConfig, targetPath, buffer) {
 }
 
 function getMetadata(src) {
-  return sharp(src).metadata()
+  return sharp(src, { failOnError: false }).metadata()
 }
 
 function makeResized(src, maxWidth, maxHeight) {
-  return sharp(src).rotate().resize({ height: maxHeight, width: maxWidth, fit: 'inside' }).toBuffer()
+  return sharp(src, { failOnError: false }).rotate().resize({ height: maxHeight, width: maxWidth, fit: 'inside' }).toBuffer()
 }
