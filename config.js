@@ -92,7 +92,7 @@ config.cronjobs = [
 		schedule: '20 4 * * *'
 	},
 	{
-		script: 'updateSotaTrails',
+		script: 'updateSotatrails',
 		schedule: '30 2 * * *'
 	},
 	{
