@@ -23,6 +23,7 @@ async function processSummitList(db) {
 	let body = response.data.substring(response.data.indexOf("\n")+1, response.data.length);
 
 	let summits = parse(body, {columns: true, relax_column_count: true});
+	let csvSummitCodes = new Set();
 	
 	if (summits.length < 100000) {
 		console.error("Bad number of summits, expecting more than 100000");
@@ -41,6 +42,7 @@ async function processSummitList(db) {
 			summit.ActivationDate = null;
 			summit.ActivationCall = null;
 		}
+		csvSummitCodes.add(summit.SummitCode);
 
 		bulkWrites.push({updateOne: {
 			filter: {code: summit.SummitCode},
@@ -60,6 +62,9 @@ async function processSummitList(db) {
 				activationCount: parseInt(summit.ActivationCount),
 				activationCall: summit.ActivationCall,
 				activationDate: summit.ActivationDate
+			},
+			$unset: {
+				retired: ""
 			}},
 			upsert: true
 		}});
@@ -113,6 +118,19 @@ async function processSummitList(db) {
 
 	if (bulkWrites.length > 0) {
 		await db.collection('summits').bulkWrite(bulkWrites);
+	}
+
+	// Fetch all non-retired summit codes in DB and find those that don't exist in the CSV anymore
+	let dbSummitCodes = new Set(await db.collection('summits').distinct('code', {'retired': {$in: [null, false]}}));
+	let retiredSummitCodes = new Set([...dbSummitCodes].filter(x => !csvSummitCodes.has(x)));
+
+	// Mark those summits as retired in DB, and also warn if one of them has photos
+	for (const code of retiredSummitCodes) {
+		let summit = await db.collection('summits').findOne({code});
+		if (summit.photos) {
+			console.error(`[ALERT] Summit ${code} has been retired, but still has photos!`);
+		}
+		await db.collection('summits').updateOne({code}, {$set: {retired: true}});
 	}
 
 	// Update associations	

@@ -71,7 +71,10 @@ app.get('/summits/search', (req, res) => {
 			limit = limitOverride;
 		}
 	}
-	db.getDb().collection('summits').find({$or: [{code: {'$regex': req.query.q, '$options': 'i'}}, {name: {'$regex': req.query.q, '$options': 'i'}}, {nameNd: {'$regex': req.query.q, '$options': 'i'}}]}, {projection: {'_id': false, 'photos': false, 'routes': false, 'links': false, 'resources': false}}).limit(limit).toArray((err, summits) => {
+	db.getDb().collection('summits').find({
+			$or: [{code: {'$regex': req.query.q, '$options': 'i'}}, {name: {'$regex': req.query.q, '$options': 'i'}}, {nameNd: {'$regex': req.query.q, '$options': 'i'}}],
+			retired: {$in: [null, false]}
+		}, {projection: {'_id': false, 'photos': false, 'routes': false, 'links': false, 'resources': false}}).limit(limit).toArray((err, summits) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();
@@ -91,7 +94,8 @@ app.get('/summits/near', (req, res) => {
 		}
 	}
 	let query = {
-		coordinates: {$near: {$geometry: {type: "Point", coordinates: [parseFloat(req.query.lon), parseFloat(req.query.lat)]}}}
+		coordinates: {$near: {$geometry: {type: "Point", coordinates: [parseFloat(req.query.lon), parseFloat(req.query.lat)]}}},
+		retired: {$in: [null, false]}
 	};
 	if (req.query.maxDistance) {
 		query.coordinates.$near.$maxDistance = parseFloat(req.query.maxDistance);
@@ -142,7 +146,7 @@ app.get('/summits/:association/:code', (req, res) => {
 		noCache: true
 	};
 	
-	db.getDb().collection('summits').findOne({code: req.params.association + '/' + req.params.code}, {projection: {'_id': false}}, (err, summit) => {
+	db.getDb().collection('summits').findOne({code: req.params.association + '/' + req.params.code, retired: {$in: [null, false]}}, {projection: {'_id': false}}, (err, summit) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();
@@ -209,7 +213,7 @@ app.get('/regions/:association/:region', (req, res) => {
 		res.status(400).end();
 		return;
 	}
-	db.getDb().collection('summits').find({code: {'$regex': '^' + region}}, {projection: {'_id': false, 'routes': false, 'links': false, 'resources': false}}).toArray((err, summits) => {
+	db.getDb().collection('summits').find({code: {'$regex': '^' + region}, retired: {$in: [null, false]}}, {projection: {'_id': false, 'routes': false, 'links': false, 'resources': false}}).toArray((err, summits) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();
