@@ -15,7 +15,6 @@ const users = require('./users');
 const activations = require('./activations');
 const utils = require('./utils');
 const photos_router = require('./photos_router');
-const tracks_router = require('./tracks_router');
 const solardata = require('./solardata');
 const maxmind = require('maxmind');
 const cronjobs = require('./cronjobs');
@@ -51,7 +50,6 @@ app.use('/geoexport', geoexport);
 app.use('/activations', activations);
 app.use('/users', users);
 app.use('/photos', photos_router);
-app.use('/tracks', tracks_router);
 app.use('/solardata', solardata);
 
 db.waitDb(() => {

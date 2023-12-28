@@ -9,8 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@turf/simplify": "^5.1.5",
-    "axios": "^0.21.1",
+    "axios": "^1.6.3",
     "carrier": "^0.3.0",
     "csv-parse": "^5.3.0",
     "diacritics": "^1.3.0",
@@ -19,7 +18,7 @@
     "express": "^4.17.1",
     "express-bearer-token": "^2.4.0",
     "express-cache-controller": "^1.1.0",
-    "express-jwt": "^5.3.1",
+    "express-jwt": "^8.4.1",
     "express-validator": "^6.10.0",
     "express-ws": "^4.0.0",
     "geolite2-redist": "^3.0.2",
@@ -34,9 +33,7 @@
     "node-cron": "^3.0.1",
     "promise-retry": "^2.0.1",
     "reconnect-net": "^1.1.1",
-    "sharp": "^0.30.7",
-    "togeojson": "^0.16.0",
-    "togpx": "^0.5.4",
+    "sharp": "^0.33.1",
     "treemap-js": "^1.2.1"
   }
 }
