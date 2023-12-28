@@ -33,7 +33,7 @@
     "node-cron": "^3.0.1",
     "promise-retry": "^2.0.1",
     "reconnect-net": "^1.1.1",
-    "sharp": "^0.33.1",
+    "sharp": "^0.32.6",
     "treemap-js": "^1.2.1"
   }
 }
