@@ -22,7 +22,7 @@ let jwtCallback = jwt({
 const DB_COLLECTION_USERS = "users";
 
 router.get("/me", jwtCallback, (req, res) => {
-    const reqUserId = req.user.userid;
+    const reqUserId = req.auth.userid;
     if (!reqUserId) {
         return res.status(401).send("Missing userid in SSO token").end();
     }
@@ -53,7 +53,7 @@ router.post("/me/settings",
     jwtCallback,
     (req, res) => {
 
-        const reqUserId = req.user.userid;
+        const reqUserId = req.auth.userid;
         if (!reqUserId) {
             return res.status(401).send("Missing userid in SSO token").end();
         }
@@ -70,7 +70,7 @@ router.post("/me/settings",
     });
 
 router.get("/me/tags", jwtCallback, (req, res) => {
-    const reqUserId = req.user.userid;
+    const reqUserId = req.auth.userid;
     if (!reqUserId) {
         return res.status(401).send("Missing userid in SSO token").end();
     }
@@ -95,7 +95,7 @@ router.get("/me/tags", jwtCallback, (req, res) => {
 });
 
 router.get("/me/summits/tags", jwtCallback, (req, res) => {
-    const reqUserId = req.user.userid;
+    const reqUserId = req.auth.userid;
     if (!reqUserId) {
         return res.status(401).send("Missing userid in SSO token").end();
     }
@@ -130,7 +130,7 @@ router.get("/me/summits/tags", jwtCallback, (req, res) => {
 });
 
 router.get("/me/summit/:association/:code", jwtCallback, (req, res) => {
-    const reqUserId = req.user.userid;
+    const reqUserId = req.auth.userid;
     if (!reqUserId) {
         return res.status(401).send("Missing userid in SSO token").end();
     }
@@ -175,7 +175,7 @@ router.post("/me/summit/:association/:code",
     body("tags.*").isString(),
     (req, res) => {
 
-        const reqUserId = req.user.userid;
+        const reqUserId = req.auth.userid;
         if (!reqUserId) {
             return res.status(401).send("Missing userid in SSO token").end();
         }

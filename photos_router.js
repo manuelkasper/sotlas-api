@@ -27,7 +27,7 @@ router.post('/summits/:association/:code/upload', jwtCallback, upload.array('pho
       noCache: true
     }
     
-    if (!req.user.callsign) {
+    if (!req.auth.callsign) {
       res.status(401).send('Missing callsign in SSO token').end()
       return
     }
@@ -42,7 +42,7 @@ router.post('/summits/:association/:code/upload', jwtCallback, upload.array('pho
     if (req.files) {
       let dbPhotos = []
       for (let file of req.files) {
-        let photo = await photos.importPhoto(file.path, req.user.callsign)
+        let photo = await photos.importPhoto(file.path, req.auth.callsign)
         dbPhotos.push(photo)
       }
 
@@ -70,7 +70,7 @@ router.delete('/summits/:association/:code/:filename', jwtCallback, async (req, 
     noCache: true
   }
   
-  if (!req.user.callsign) {
+  if (!req.auth.callsign) {
     res.status(401).send('Missing callsign in SSO token').end()
     return
   }
@@ -84,7 +84,7 @@ router.delete('/summits/:association/:code/:filename', jwtCallback, async (req, 
   }
 
   // Check that uploader is currently logged in user
-  if (photo.author !== req.user.callsign) {
+  if (photo.author !== req.auth.callsign) {
     res.status(401).send('Cannot delete another user\'s photos').end()
     return
   }
@@ -99,7 +99,7 @@ router.post('/summits/:association/:code/reorder', jwtCallback, async (req, res)
     noCache: true
   }
 
-  if (!req.user.callsign) {
+  if (!req.auth.callsign) {
     res.status(401).send('Missing callsign in SSO token').end()
     return
   }
@@ -109,7 +109,7 @@ router.post('/summits/:association/:code/reorder', jwtCallback, async (req, res)
   // Assign new sortOrder index to photos of this user, in the order given by req.body.filenames
   let updates = req.body.filenames.map((filename, index) => {
     return db.getDb().collection('summits').updateOne(
-      { code: summitCode, 'photos.author': req.user.callsign, 'photos.filename': filename },
+      { code: summitCode, 'photos.author': req.auth.callsign, 'photos.filename': filename },
       { $set: { 'photos.$.sortOrder': index + 1 } }
     )
   })
@@ -124,7 +124,7 @@ router.post('/summits/:association/:code/:filename', jwtCallback, async (req, re
     noCache: true
   }
 
-  if (!req.user.callsign) {
+  if (!req.auth.callsign) {
     res.status(401).send('Missing callsign in SSO token').end()
     return
   }
@@ -138,7 +138,7 @@ router.post('/summits/:association/:code/:filename', jwtCallback, async (req, re
   }
 
   // Check that editor is the currently logged in user
-  if (photo.author !== req.user.callsign) {
+  if (photo.author !== req.auth.callsign) {
     res.status(401).send('Cannot delete another user\'s photos').end()
     return
   }
