@@ -1,8 +1,8 @@
 const express = require("express");
 const {body, validationResult} = require('express-validator');
 const config = require('./config')
-var { expressjwt: jwt } = require("express-jwt");
-const jwksRsa = require("jwks-rsa");
+const { expressjwt: jwt } = require('express-jwt')
+const { expressJwtSecret } = require('jwks-rsa')
 const db = require("./db");
 const summitUtils = require('./summits');
 
@@ -10,7 +10,7 @@ let router = express.Router();
 module.exports = router;
 
 let jwtCallback = jwt({
-    secret: jwksRsa.expressJwtSecret({
+    secret: expressJwtSecret({
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 5,

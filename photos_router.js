@@ -2,8 +2,8 @@ const express = require('express')
 const multer  = require('multer')
 const config = require('./config')
 const photos = require('./photos')
-var { expressjwt: jwt } = require("express-jwt")
-const jwksRsa = require('jwks-rsa')
+const { expressjwt: jwt } = require('express-jwt')
+const { expressJwtSecret } = require('jwks-rsa')
 const db = require('./db')
 
 let upload = multer({dest: config.photos.uploadPath})
@@ -12,7 +12,7 @@ let router = express.Router()
 module.exports = router
 
 let jwtCallback = jwt({
-  secret: jwksRsa.expressJwtSecret({
+  secret: expressJwtSecret({
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
