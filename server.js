@@ -18,6 +18,7 @@ const photos_router = require('./photos_router');
 const solardata = require('./solardata');
 const maxmind = require('maxmind');
 const cronjobs = require('./cronjobs');
+const moment = require('moment');
 
 let geoLookup;
 import('geolite2-redist').then((geolite2) => {
@@ -338,6 +339,12 @@ app.get('/my_country', (req, res) => {
 	} else {
 		res.json({country: geo.country.iso_code});
 	}
+});
+
+app.post('/mapsession', (req, res) => {
+	let date = moment().format('YYYY-MM-DD');
+	db.getDb().collection('mapsessions').updateOne({"date": date}, {"$inc": {"count": 1}}, {upsert: true});
+	res.json({});
 });
 
 app.listen(config.http.port, config.http.host);
