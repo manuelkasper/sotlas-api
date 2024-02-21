@@ -342,8 +342,12 @@ app.get('/my_country', (req, res) => {
 });
 
 app.post('/mapsession', (req, res) => {
+	let type = req.body.type;
+	if (!type) {
+		type = 'unknown';
+	}
 	let date = moment().format('YYYY-MM-DD');
-	db.getDb().collection('mapsessions').updateOne({"date": date}, {"$inc": {"count": 1}}, {upsert: true});
+	db.getDb().collection('mapsessions').updateOne({date, type}, {"$inc": {"count": 1}}, {upsert: true});
 	res.json({});
 });
 
