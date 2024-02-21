@@ -12,7 +12,7 @@ client.connect(err => {
 });
 
 async function importActivators(db) {
-	let response = await axios.get('https://api-db.sota.org.uk/admin/activator_roll?associationID=-1')
+	let response = await axios.get('https://api-db2.sota.org.uk/rolls/activator/-1/0/all/all')
 
 	// Weed out duplicate callsigns, keeping only the record with the higher number of points
 	let activators = new Map();
