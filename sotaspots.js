@@ -56,6 +56,9 @@ class SotaSpotReceiver {
 				});
 				this.removeDeletedSpots(minSpotId, currentSpotIds);
 				this.removeExpiredSpots();
+			})
+			.catch(error => {
+				console.error(error);
 			});
 	}
 
