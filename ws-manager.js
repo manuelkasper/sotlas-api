@@ -72,7 +72,11 @@ class WebSocketManager extends EventEmitter {
 	}
 
 	unicast(message, ws) {
-		ws.send(JSON.stringify(keyzipper.compressKeys(message)));
+		try {
+			ws.send(JSON.stringify(keyzipper.compressKeys(message)));
+		} catch (e) {
+			console.error(e);
+		}
 	}
 
 	numberOfClients() {
