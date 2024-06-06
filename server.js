@@ -354,6 +354,7 @@ app.post('/mapsession', (req, res) => {
 
 app.get('/reqdebug', (req, res) => {
 	res.set('Content-Type', 'text/plain');
+	res.send(util.inspect(req.ip, { depth: null }));
 	res.send(util.inspect(req, { depth: null }));
 });
 
