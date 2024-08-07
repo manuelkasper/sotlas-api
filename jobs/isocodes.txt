@@ -20,6 +20,7 @@ E5,ck,OC
 E7,ba,EU
 EA,es,EU
 EI,ie,EU
+ER,md,EU
 ES,ee,EU
 FG,gp,NA
 FH,yt,AF
@@ -44,13 +45,15 @@ HB,ch,EU
 HI,do,NA
 HL,kr,AS
 HR,hn,NA
+IA,it,AF
 I,it,EU
 JA,jp,AS
 JX,sj,EU
 JW,no,EU
-KP4,pr,NA
-KH2,gu,OC
 KH0,mp,OC
+KH2,gu,OC
+KH8,as,OC
+KP4,pr,NA
 K,us,NA
 LA,no,EU
 LU,ar,SA

@@ -198,7 +198,7 @@ function isoCodeForPrefix(prefix, prefixToIsoCode) {
 	if (isoCodeEnt) {
 		return {isoCode: isoCodeEnt[1], continent: isoCodeEnt[2]};
 	} else {
-		console.error(`ISO code not found for prefix ${prefix}`);
+		console.error(`[ALERT] ISO code not found for prefix ${prefix}`);
 		return null;
 	}
 }
