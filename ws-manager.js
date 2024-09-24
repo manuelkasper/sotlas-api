@@ -3,6 +3,7 @@ const EventEmitter = require('events');
 const keyzipper = require('./keyzipper')
 
 const PING_INTERVAL = 30000;
+const STATS_INTERVAL = 60000;
 
 class WebSocketManager extends EventEmitter {
 	constructor() {
@@ -10,11 +11,14 @@ class WebSocketManager extends EventEmitter {
 		this.webSocketClients = new Set();
 		this.router = express.Router();
 
+		setInterval(() => {
+			console.log("Number of clients: " + this.webSocketClients.size);
+		}, STATS_INTERVAL);
+
 		this.router.ws('/', (ws, req) => {
 			//console.log('WebSocket client connected');
 			ws.isAlive = true;
 			this.webSocketClients.add(ws);
-			console.log("Number of clients: " + this.webSocketClients.size);
 
 			this.emit('connect', ws);
 
@@ -31,13 +35,11 @@ class WebSocketManager extends EventEmitter {
 				//console.log("WebSocket closed");
 				clearInterval(ws.pingInterval);
 				this.webSocketClients.delete(ws);
-				console.log("Number of clients: " + this.webSocketClients.size);
 			});
 			ws.on('error', (error) => {
 				console.log("WebSocket error: " + error);
 				clearInterval(ws.pingInterval);
 				this.webSocketClients.delete(ws);
-				console.log("Number of clients: " + this.webSocketClients.size);
 			});
 
 			ws.pingInterval = setInterval(() => {
