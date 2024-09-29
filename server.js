@@ -303,6 +303,10 @@ app.get('/activators/:callsign', (req, res) => {
 });
 
 app.get('/map_server', (req, res) => {
+	res.cacheControl = {
+		noCache: true
+	};
+	
 	if (!geoLookup) {
 		res.status(503).end();
 		return;
@@ -316,6 +320,10 @@ app.get('/map_server', (req, res) => {
 });
 
 app.get('/my_coordinates', (req, res) => {
+	res.cacheControl = {
+		noCache: true
+	};
+	
 	if (!geoLookup) {
 		res.status(503).end();
 		return;
@@ -329,6 +337,10 @@ app.get('/my_coordinates', (req, res) => {
 });
 
 app.get('/my_country', (req, res) => {
+	res.cacheControl = {
+		noCache: true
+	};
+	
 	if (!geoLookup) {
 		res.status(503).end();
 		return;
