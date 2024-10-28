@@ -37,7 +37,7 @@ class SotaSpotReceiver {
 				let minSpotId = undefined;
 				let currentSpotIds = new Set();
 				response.data.forEach(spot => {
-					spot.summit = {code: spot.summitCode.toUpperCase.trim()};
+					spot.summit = {code: spot.summitCode.toUpperCase().trim()};
 					spot.timeStamp = new Date(spot.timeStamp);
 					spot.activatorCallsign = spot.activatorCallsign.toUpperCase().replace(/[^A-Z0-9\/-]/g, '')
 					delete spot.associationCode;
