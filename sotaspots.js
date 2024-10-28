@@ -30,20 +30,26 @@ class SotaSpotReceiver {
 		if (this.latestSpots.getLength() == 0) {
 			numSpotsToLoad = config.sotaspots.initialLoadSpots;
 		}
+		// TODO: check epoch and only load spots list if the epoch has changed since the last load
 		console.log(`Load ${numSpotsToLoad} spots`);
-		axios.get(config.sotaspots.url + '/' + numSpotsToLoad + '/all')
+		axios.get(config.sotaspots.url + '/' + numSpotsToLoad + '/all/all/')
 			.then(response => {
 				let minSpotId = undefined;
 				let currentSpotIds = new Set();
 				response.data.forEach(spot => {
-					spot.summit = {code: spot.associationCode.toUpperCase().trim() + '/' + spot.summitCode.toUpperCase().trim()};
+					spot.summit = {code: spot.summitCode.toUpperCase.trim()};
 					spot.timeStamp = new Date(spot.timeStamp);
 					spot.activatorCallsign = spot.activatorCallsign.toUpperCase().replace(/[^A-Z0-9\/-]/g, '')
 					delete spot.associationCode;
 					delete spot.summitCode;
 					delete spot.summitDetails;
+					delete spot.summitName;
+					delete spot.AltM;
+					delete spot.AltFt;
+					delete spot.points;
 					delete spot.highlightColor;
 					delete spot.activatorName;
+					delete spot.epoch;
 					if (spot.comments === '(null)') {
 						spot.comments = '';
 					}

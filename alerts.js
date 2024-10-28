@@ -52,6 +52,7 @@ function loadAlerts(noCache) {
 }
 
 function loadAlertsDirect() {
+	// TODO: check epoch and only load alerts list if the epoch has changed since the last load
 	return axios.get(config.alerts.url)
 		.then(response => {
 			if (response.status !== 200) {

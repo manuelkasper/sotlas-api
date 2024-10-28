@@ -17,12 +17,12 @@ config.sotaspots = {
 	periodicLoadSpots: 100,
 	maxSpotAge: 86400000,
 	updateInterval: 30000,
-	url: 'https://api2.sota.org.uk/api/spots'
+	url: 'https://api-db2.sota.org.uk/api/spots'
 };
 
 config.alerts = {
 	minUpdateInterval: 60000,
-	url: 'https://api2.sota.org.uk/api/alerts/12'
+	url: 'https://api-db2.sota.org.uk/api/alerts/12/all/all/'
 };
 
 config.rbn = {
