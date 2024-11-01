@@ -8,6 +8,7 @@ class SotaSpotReceiver {
 	constructor() {
 		this.latestSpots = new TreeMap();
 		this.lastUpdate = null;
+		this.lastEpoch = null;
 
 		wsManager.on('connect', (ws) => {
 			let spots = []
@@ -25,18 +26,21 @@ class SotaSpotReceiver {
 		}, config.sotaspots.updateInterval);
 	}
 
-	loadSpots() {
+	async loadSpots() {
 		let numSpotsToLoad = config.sotaspots.periodicLoadSpots;
 		if (this.latestSpots.getLength() == 0) {
 			numSpotsToLoad = config.sotaspots.initialLoadSpots;
 		}
-		// TODO: check epoch and only load spots list if the epoch has changed since the last load
-		console.log(`Load ${numSpotsToLoad} spots`);
-		axios.get(config.sotaspots.url + '/' + numSpotsToLoad + '/all/all/')
-			.then(response => {
+
+		try {
+			let epoch = (await axios.get(config.sotaspots.url + '/epoch')).data
+			if (epoch !== this.lastEpoch) {
+				console.log(`Load ${numSpotsToLoad} spots`);
+				let response = await axios.get(config.sotaspots.url + '/' + numSpotsToLoad + '/all/all/')
 				let minSpotId = undefined;
 				let currentSpotIds = new Set();
 				response.data.forEach(spot => {
+					this.lastEpoch = spot.epoch;
 					spot.summit = {code: spot.summitCode.toUpperCase().trim()};
 					spot.timeStamp = new Date(spot.timeStamp);
 					spot.activatorCallsign = spot.activatorCallsign.toUpperCase().replace(/[^A-Z0-9\/-]/g, '')
@@ -63,10 +67,10 @@ class SotaSpotReceiver {
 				});
 				this.removeDeletedSpots(minSpotId, currentSpotIds);
 				this.removeExpiredSpots();
-			})
-			.catch(error => {
-				console.error(error);
-			});
+			}
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	updateSpot(spot) {
