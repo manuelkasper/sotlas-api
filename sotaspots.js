@@ -54,7 +54,6 @@ class SotaSpotReceiver {
 					delete spot.highlightColor;
 					delete spot.activatorName;
 					delete spot.epoch;
-					delete spot.userID;
 					if (spot.comments === '(null)') {
 						spot.comments = '';
 					}
