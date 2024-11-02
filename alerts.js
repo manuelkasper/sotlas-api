@@ -63,6 +63,7 @@ function loadAlertsDirect() {
 			let newAlerts = response.data.map(alert => {
 				return {
 					id: alert.id,
+					userID: alert.userID,
 					timeStamp: new Date(alert.timeStamp),
 					dateActivated: new Date(alert.dateActivated),
 					summit: {code: alert.associationCode + '/' + alert.summitCode},
