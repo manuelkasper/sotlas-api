@@ -29,7 +29,7 @@ router.get('/:callsign', (req, res) => {
 			return;
 		}
 
-		axios.get('https://api-db.sota.org.uk/admin/activator_log_by_id', { params: { id: activator.userId, year: 'all' } })
+		axios.get('https://api-db2.sota.org.uk/logs/activator/' + activator.userId + '/99999/0')
 			.then(response => {
 				let activations = response.data.map(activation => {
 					return {
@@ -42,7 +42,7 @@ router.get('/:callsign', (req, res) => {
 						points: activation.Points,
 						bonus: activation.BonusPoints,
 						summit: {
-							code: activation.Summit.substring(0, activation.Summit.indexOf(' '))
+							code: activation.SummitCode
 						}
 					}
 				});
