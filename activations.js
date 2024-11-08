@@ -33,7 +33,7 @@ router.get('/:callsign', (req, res) => {
 			.then(response => {
 				let activations = response.data.map(activation => {
 					return {
-						id: activation[0],
+						id: activation.ActivationId,
 						date: moment.utc(activation.ActivationDate).toDate(),
 						callsignUsed: activation.OwnCallsign,
 						qsos: activation.QSOs,
