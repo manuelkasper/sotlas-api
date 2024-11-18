@@ -7,8 +7,8 @@ const TreeMap = require("treemap-js");
 class SotaSpotReceiver {
 	constructor() {
 		this.latestSpots = new TreeMap();
-		this.lastUpdate = null;
 		this.lastEpoch = null;
+		this.lastFullLoad = null;
 
 		wsManager.on('connect', (ws) => {
 			let spots = []
@@ -27,10 +27,10 @@ class SotaSpotReceiver {
 	}
 
 	async loadSpots() {
-		let numSpotsToLoad = config.sotaspots.periodicLoadSpots;
-		if (this.latestSpots.getLength() == 0) {
-			numSpotsToLoad = config.sotaspots.initialLoadSpots;
-		}
+		let isFullLoad = this.latestSpots.getLength() === 0 ||
+						 this.lastFullLoad === null || 
+						 (new Date().getTime() - this.lastFullLoad.getTime()) > config.sotaspots.fullLoadInterval;
+		let numSpotsToLoad = isFullLoad ? config.sotaspots.fullLoadSpots : config.sotaspots.periodicLoadSpots;
 
 		try {
 			let epoch = (await axios.get(config.sotaspots.url + '/epoch')).data
@@ -64,7 +64,10 @@ class SotaSpotReceiver {
 						minSpotId = spot.id;
 					}
 				});
-				this.removeDeletedSpots(minSpotId, currentSpotIds);
+				if (this.isFullLoad) {
+					this.removeDeletedSpots(minSpotId, currentSpotIds);
+					this.lastFullLoad = new Date();
+				}
 				this.removeExpiredSpots();
 			}
 		} catch (error) {

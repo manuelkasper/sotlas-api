@@ -13,10 +13,11 @@ config.mongodb = {
 };
 
 config.sotaspots = {
-	initialLoadSpots: -24,
+	fullLoadSpots: -24,
 	periodicLoadSpots: 100,
 	maxSpotAge: 86400000,
 	updateInterval: 30000,
+	fullLoadInterval: 300000,
 	url: 'https://api-db2.sota.org.uk/api/spots'
 };
 
