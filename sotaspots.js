@@ -64,7 +64,7 @@ class SotaSpotReceiver {
 						minSpotId = spot.id;
 					}
 				});
-				if (this.isFullLoad) {
+				if (isFullLoad) {
 					this.removeDeletedSpots(minSpotId, currentSpotIds);
 					this.lastFullLoad = new Date();
 				}
@@ -124,7 +124,7 @@ class SotaSpotReceiver {
 		while (this.latestSpots.getLength() > 0) {
 			let minKey = this.latestSpots.getMinKey();
 			if ((now - this.latestSpots.get(minKey).timeStamp) > config.sotaspots.maxSpotAge) {
-				console.log('Remove spot ID ' + minKey);
+				console.log('Spot ID ' + minKey + ' expired');
 				this.latestSpots.remove(minKey);
 			} else {
 				break;
