@@ -190,6 +190,28 @@ function gpxForQuery(query, name, options, callback) {
 	});
 }
 
+function getStyle(points) {
+	if (points === 10) {
+		return 'red';
+	}
+	if (points >= 8) {
+		return 'deeporange';
+	}
+	if (points >= 6) {
+		return 'orange';
+	}
+	if (points >= 4) {
+		return 'brown';
+	}
+	if (points >= 2) {
+		return 'lime';
+	}
+	if (points >= 1) {
+		return 'green';
+	}
+	return 'green';
+}
+
 function kmlForAssociation(associationCode, options, callback) {
 	db.getDb().collection('associations').findOne({code: associationCode}, (err, association) => {
 		if (err) {
@@ -219,6 +241,53 @@ function kmlForAssociation(associationCode, options, callback) {
     <TimeStamp>
       <when>${now.toISOString()}</when>
     </TimeStamp>
+`;
+            // add styles for placemarks 
+			// FIXME: use options to enable/disable styles??
+			// FIXME: use icons from a sotl.as server!
+			kml += `
+    <Style id="placemark-red">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-red.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-deeporange">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-deeporange.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-orange">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-orange.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-brown">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-brown.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-lime">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-lime.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-green">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-green.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
 `;
 
 			association.regions.forEach(region => {
@@ -357,6 +426,7 @@ function kmlForSummit(summit, options) {
         <Point>
           <coordinates>${summit.coordinates.longitude},${summit.coordinates.latitude},${summit.altitude}</coordinates>
         </Point>
+        <styleUrl>#placemark-${getStyle(summit.points)}</styleUrl>
       </Placemark>
 `;
 }
