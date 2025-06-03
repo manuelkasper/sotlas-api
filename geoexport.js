@@ -190,6 +190,54 @@ function gpxForQuery(query, name, options, callback) {
 	});
 }
 
+    // Styles for KML export
+    // FIXME: use icons from a sotl.as server!
+	const KML_STYLES = `
+    <Style id="placemark-red">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-red.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-deeporange">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-deeporange.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-orange">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-orange.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-brown">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-brown.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-lime">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-lime.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-green">
+      <IconStyle>
+        <Icon>
+          <href>https://omaps.app/placemarks/placemark-green.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+`;
+
+
 function getStyle(points) {
 	if (points === 10) {
 		return 'red';
@@ -244,51 +292,7 @@ function kmlForAssociation(associationCode, options, callback) {
 `;
             // add styles for placemarks 
 			// FIXME: use options to enable/disable styles??
-			// FIXME: use icons from a sotl.as server!
-			kml += `
-    <Style id="placemark-red">
-      <IconStyle>
-        <Icon>
-          <href>https://omaps.app/placemarks/placemark-red.png</href>
-        </Icon>
-      </IconStyle>
-    </Style>
-    <Style id="placemark-deeporange">
-      <IconStyle>
-        <Icon>
-          <href>https://omaps.app/placemarks/placemark-deeporange.png</href>
-        </Icon>
-      </IconStyle>
-    </Style>
-    <Style id="placemark-orange">
-      <IconStyle>
-        <Icon>
-          <href>https://omaps.app/placemarks/placemark-orange.png</href>
-        </Icon>
-      </IconStyle>
-    </Style>
-    <Style id="placemark-brown">
-      <IconStyle>
-        <Icon>
-          <href>https://omaps.app/placemarks/placemark-brown.png</href>
-        </Icon>
-      </IconStyle>
-    </Style>
-    <Style id="placemark-lime">
-      <IconStyle>
-        <Icon>
-          <href>https://omaps.app/placemarks/placemark-lime.png</href>
-        </Icon>
-      </IconStyle>
-    </Style>
-    <Style id="placemark-green">
-      <IconStyle>
-        <Icon>
-          <href>https://omaps.app/placemarks/placemark-green.png</href>
-        </Icon>
-      </IconStyle>
-    </Style>
-`;
+			kml += KML_STYLES;
 
 			association.regions.forEach(region => {
 				kml += `    <Folder>
@@ -342,6 +346,10 @@ function kmlForRegion(associationCode, regionCode, options, callback) {
     </TimeStamp>
 `;
 
+            // add styles for placemarks 
+			// FIXME: use options to enable/disable styles??
+			kml += KML_STYLES;
+			
 			association.regions.forEach(region => {
 				if (regionCode && region.code !== regionCode) {
 					return;
