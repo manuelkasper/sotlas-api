@@ -191,47 +191,46 @@ function gpxForQuery(query, name, options, callback) {
 }
 
     // Styles for KML export
-    // FIXME: use icons from a sotl.as server!
 	const KML_STYLES = `
     <Style id="placemark-red">
       <IconStyle>
         <Icon>
-          <href>https://omaps.app/placemarks/placemark-red.png</href>
+          <href>https://sotl.as/summit-circles/summit-circle-10pt.png</href>
         </Icon>
       </IconStyle>
     </Style>
     <Style id="placemark-deeporange">
       <IconStyle>
         <Icon>
-          <href>https://omaps.app/placemarks/placemark-deeporange.png</href>
+          <href>https://sotl.as/summit-circles/summit-circle-8pt.png</href>
         </Icon>
       </IconStyle>
     </Style>
     <Style id="placemark-orange">
       <IconStyle>
         <Icon>
-          <href>https://omaps.app/placemarks/placemark-orange.png</href>
+          <href>https://sotl.as/summit-circles/summit-circle-6pt.png</href>
         </Icon>
       </IconStyle>
     </Style>
     <Style id="placemark-brown">
       <IconStyle>
         <Icon>
-          <href>https://omaps.app/placemarks/placemark-brown.png</href>
+          <href>https://sotl.as/summit-circles/summit-circle-4pt.png</href>
         </Icon>
       </IconStyle>
     </Style>
     <Style id="placemark-lime">
       <IconStyle>
         <Icon>
-          <href>https://omaps.app/placemarks/placemark-lime.png</href>
+          <href>https://sotl.as/summit-circles/summit-circle-2pt.png</href>
         </Icon>
       </IconStyle>
     </Style>
     <Style id="placemark-green">
       <IconStyle>
         <Icon>
-          <href>https://omaps.app/placemarks/placemark-green.png</href>
+          <href>https://sotl.as/summit-circles/summit-circle-1pt.png</href>
         </Icon>
       </IconStyle>
     </Style>
@@ -290,8 +289,7 @@ function kmlForAssociation(associationCode, options, callback) {
       <when>${now.toISOString()}</when>
     </TimeStamp>
 `;
-            // add styles for placemarks 
-			// FIXME: use options to enable/disable styles??
+			// add styles for placemarks 
 			kml += KML_STYLES;
 
 			association.regions.forEach(region => {
@@ -346,8 +344,7 @@ function kmlForRegion(associationCode, regionCode, options, callback) {
     </TimeStamp>
 `;
 
-            // add styles for placemarks 
-			// FIXME: use options to enable/disable styles??
+			// add styles for placemarks 
 			kml += KML_STYLES;
 			
 			association.regions.forEach(region => {
