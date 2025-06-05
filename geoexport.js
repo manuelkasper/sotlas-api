@@ -190,6 +190,76 @@ function gpxForQuery(query, name, options, callback) {
 	});
 }
 
+// Styles for KML export
+// Note: these style IDs have a special meaning in the Organic Maps app (https://organicmaps.app), as it ignores external icon images.
+const KML_STYLES = `
+    <Style id="placemark-red">
+      <IconStyle>
+        <Icon>
+          <href>https://sotl.as/summit-circles/summit-circle-10pt.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-deeporange">
+      <IconStyle>
+        <Icon>
+          <href>https://sotl.as/summit-circles/summit-circle-8pt.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-orange">
+      <IconStyle>
+        <Icon>
+          <href>https://sotl.as/summit-circles/summit-circle-6pt.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-brown">
+      <IconStyle>
+        <Icon>
+          <href>https://sotl.as/summit-circles/summit-circle-4pt.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-lime">
+      <IconStyle>
+        <Icon>
+          <href>https://sotl.as/summit-circles/summit-circle-2pt.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="placemark-green">
+      <IconStyle>
+        <Icon>
+          <href>https://sotl.as/summit-circles/summit-circle-1pt.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+`;
+
+
+function getStyle(points) {
+	if (points === 10) {
+		return 'red';
+	}
+	if (points >= 8) {
+		return 'deeporange';
+	}
+	if (points >= 6) {
+		return 'orange';
+	}
+	if (points >= 4) {
+		return 'brown';
+	}
+	if (points >= 2) {
+		return 'lime';
+	}
+	if (points >= 1) {
+		return 'green';
+	}
+	return 'green';
+}
+
 function kmlForAssociation(associationCode, options, callback) {
 	db.getDb().collection('associations').findOne({code: associationCode}, (err, association) => {
 		if (err) {
@@ -220,6 +290,8 @@ function kmlForAssociation(associationCode, options, callback) {
       <when>${now.toISOString()}</when>
     </TimeStamp>
 `;
+			// add styles for placemarks 
+			kml += KML_STYLES;
 
 			association.regions.forEach(region => {
 				kml += `    <Folder>
@@ -273,6 +345,9 @@ function kmlForRegion(associationCode, regionCode, options, callback) {
     </TimeStamp>
 `;
 
+			// add styles for placemarks 
+			kml += KML_STYLES;
+			
 			association.regions.forEach(region => {
 				if (regionCode && region.code !== regionCode) {
 					return;
@@ -357,6 +432,7 @@ function kmlForSummit(summit, options) {
         <Point>
           <coordinates>${summit.coordinates.longitude},${summit.coordinates.latitude},${summit.altitude}</coordinates>
         </Point>
+        <styleUrl>#placemark-${getStyle(summit.points)}</styleUrl>
       </Placemark>
 `;
 }
