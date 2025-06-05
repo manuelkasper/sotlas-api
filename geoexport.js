@@ -190,8 +190,9 @@ function gpxForQuery(query, name, options, callback) {
 	});
 }
 
-    // Styles for KML export
-	const KML_STYLES = `
+// Styles for KML export
+// Note: these style IDs have a special meaning in the Organic Maps app (https://organicmaps.app), as it ignores external icon images.
+const KML_STYLES = `
     <Style id="placemark-red">
       <IconStyle>
         <Icon>
