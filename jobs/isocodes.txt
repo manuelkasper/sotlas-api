@@ -91,7 +91,7 @@ VK,au,OC
 VO,ca,NA
 VP8,fk,SA
 VR,hk,AS
-VY,ca,EU
+VY,ca,NA
 W,us,NA
 XE,mx,NA
 XF,mx,NA
