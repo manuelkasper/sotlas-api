@@ -18,6 +18,7 @@ const solardata = require('./solardata');
 const maxmind = require('maxmind');
 const cronjobs = require('./cronjobs');
 const mapkey = require('./mapkey');
+const cors = require('cors');
 
 let geoLookup;
 import('geolite2-redist').then((geolite2) => {
@@ -44,6 +45,9 @@ app.use(cacheControl({
 	maxAge: 3600
 }));
 app.use(bearerToken());
+if (config.http.corsAllowAll) {
+	app.use(cors());
+}
 app.use('/ws', wsManager.router);
 app.use('/alerts', alerts);
 app.use('/geoexport', geoexport);

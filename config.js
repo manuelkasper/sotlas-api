@@ -3,7 +3,8 @@ module.exports = config;
 
 config.http = {
 	host: undefined,
-	port: 8081
+	port: 8081,
+	corsAllowAll: process.env.CORS_ALLOW_ALL === 'true'
 };
 
 config.mongodb = {
