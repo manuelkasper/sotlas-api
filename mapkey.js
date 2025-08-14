@@ -20,8 +20,8 @@ let jwtCallback = jwt({
 
 router.get("/get", jwtCallback, async (req, res) => {
     // Must either be logged in or have a valid Turnstile token
-    if (req.user) {
-        console.log('Request for MapTiler key with SSO login from user ' + req.user.userid);
+    if (req.auth) {
+        console.log('Request for MapTiler key with SSO login from user ' + req.auth.userid);
         res.json({mapTilerApiKey: config.mapTiler.apiKey});
         return;
     }
