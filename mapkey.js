@@ -51,9 +51,7 @@ router.get("/get", jwtCallback, async (req, res) => {
     }
 
     console.error('Request for MapTiler key without SSO login or Captcha response from ' + req.ip);
-
-    res.json({ mapTilerApiKey: config.mapTiler.apiKey });
-    // return res.status(401).send('Unable to verify SSO login or Captcha response').end();
+    return res.status(401).send('Unable to verify SSO login or Captcha response').end();
 });
 
 module.exports = router;
