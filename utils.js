@@ -13,5 +13,24 @@ module.exports = {
 		} else {
 			return [callsign];
 		}
+	},
+
+	anonymizeIP(ip) {
+		if (!ip) return null;
+		// Handle IPv4 addresses
+		if (ip.includes('.')) {
+			let parts = ip.split('.');
+			if (parts.length === 4) {
+				return parts.slice(0, 3).join('.') + '.0';
+			}
+		}
+		// Handle IPv6 addresses - keep first 64 bits (first 4 groups)
+		if (ip.includes(':')) {
+			let parts = ip.split(':');
+			if (parts.length >= 4) {
+				return parts.slice(0, 4).join(':') + '::';
+			}
+		}
+		return ip;
 	}
 };

@@ -358,9 +358,23 @@ app.post('/mapsession', (req, res) => {
 	if (!type) {
 		type = 'unknown';
 	}
-	let date = moment().format('YYYY-MM-DD');
-	db.getDb().collection('mapsessions').updateOne({date, type}, {"$inc": {"count": 1}}, {upsert: true});
-	res.json({});
+	
+	let sessionDoc = {
+		type: type,
+		timestamp: new Date(),
+		ipAddress: utils.anonymizeIP(req.ip),
+		userAgent: req.get('User-Agent') || null,
+		sessionId: req.body.sessionId || null
+	};
+	
+	db.getDb().collection('mapsessions').insertOne(sessionDoc, (err, result) => {
+		if (err) {
+			console.error('Error inserting map session:', err);
+			res.status(500).end();
+			return;
+		}
+		res.json({});
+	});
 });
 
 app.listen(config.http.port, config.http.host);
