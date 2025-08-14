@@ -83,6 +83,14 @@ config.solardata = {
 	apiKey: process.env.SOLARDATA_API_KEY
 };
 
+config.mapTiler = {
+	apiKey: process.env.MAPTILER_API_KEY
+};
+
+config.turnstile = {
+	secretKey: process.env.TURNSTILE_SECRET_KEY
+};
+
 config.cronjobs = [
 	{
 		script: 'importActivators',

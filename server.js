@@ -1,6 +1,5 @@
 const express = require('express');
 const config = require('./config');
-const assert = require('assert');
 const app = express();
 const expressWs = require('express-ws')(app);
 const cacheControl = require('express-cache-controller');
@@ -18,7 +17,7 @@ const photos_router = require('./photos_router');
 const solardata = require('./solardata');
 const maxmind = require('maxmind');
 const cronjobs = require('./cronjobs');
-const moment = require('moment');
+const mapkey = require('./mapkey');
 
 let geoLookup;
 import('geolite2-redist').then((geolite2) => {
@@ -52,6 +51,7 @@ app.use('/activations', activations);
 app.use('/users', users);
 app.use('/photos', photos_router);
 app.use('/solardata', solardata);
+app.use('/mapkey', mapkey);
 
 db.waitDb(() => {
 	let sotaSpotReceiver = new SotaSpotReceiver();
