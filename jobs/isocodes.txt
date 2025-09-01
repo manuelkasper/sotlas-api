@@ -2,6 +2,7 @@
 4O,me,EU
 4X,il,AS
 5B,cy,AS
+7P,ls,AF
 8P,bb,NA
 9A,hr,EU
 9H,mt,EU
