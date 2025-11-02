@@ -33,7 +33,7 @@ async function processSummitList(db) {
 
 	let bulkWrites = [];
 	for (let summit of summits) {
-		summit.SummitCode = summit.SummitCode.trim();	//anomaly GW/NW-003
+		summit.SummitCode = summit.SummitCode.trim().toUpperCase();
 		summit.ValidFrom = dateToMongo(summit.ValidFrom);
 		summit.ValidTo = dateToMongo(summit.ValidTo, true);
 		if (summit.ActivationDate) {
@@ -80,7 +80,10 @@ async function processSummitList(db) {
 		let isValid = (summit.ValidFrom <= now && summit.ValidTo >= now);
 		let association = associations.get(SummitAssociation);
 		if (!association) {
-			let info = isoCodeForPrefix(SummitAssociation, prefixToIsoCode)
+			let info = isoCodeForPrefix(SummitAssociation, prefixToIsoCode);
+			if (!info) {
+				continue;
+			}
 			association = {code: SummitAssociation, name: summit.AssociationName, isoCode: info.isoCode, continent: info.continent, regions: new Map(), summitCount: 0};
 			associations.set(SummitAssociation, association);
 		}
