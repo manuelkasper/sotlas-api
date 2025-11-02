@@ -32,6 +32,7 @@ FO,pf,OC
 FP,fr,NA
 FR,fr,AF
 FT,fr,AF
+FW,fr,OC
 F,fr,EU
 GD,im,EU
 GI,gb-nir,EU
