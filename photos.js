@@ -53,14 +53,23 @@ module.exports = {
         if (exifParsed.gps && exifParsed.gps.GPSLatitude && exifParsed.gps.GPSLongitude &&
             (!exifParsed.gps.GPSStatus || exifParsed.gps.GPSStatus === 'A') && 
             !isNaN(exifParsed.gps.GPSLatitude[0]) && !isNaN(exifParsed.gps.GPSLongitude[0]) &&
+            !isNaN(exifParsed.gps.GPSLatitude[1]) && !isNaN(exifParsed.gps.GPSLongitude[1]) &&
             (exifParsed.gps.GPSLatitude[0] !== 0 || exifParsed.gps.GPSLatitude[1] !== 0 || exifParsed.gps.GPSLatitude[2] !== 0) &&
             (exifParsed.gps.GPSLongitude[0] !== 0 || exifParsed.gps.GPSLongitude[1] !== 0 || exifParsed.gps.GPSLongitude[2] !== 0)) {
           photo.coordinates = {}
-          photo.coordinates.latitude = exifParsed.gps.GPSLatitude[0] + exifParsed.gps.GPSLatitude[1]/60 + exifParsed.gps.GPSLatitude[2]/3600
+          photo.coordinates.latitude = exifParsed.gps.GPSLatitude[0] + exifParsed.gps.GPSLatitude[1]/60
+          if (!isNaN(exifParsed.gps.GPSLatitude[2])) {
+            // EOS 50D puts a NaN in the seconds field
+            photo.coordinates.latitude += exifParsed.gps.GPSLatitude[2]/3600
+          }
           if (exifParsed.gps.GPSLatitudeRef === 'S') {
             photo.coordinates.latitude = -photo.coordinates.latitude
           }
-          photo.coordinates.longitude = exifParsed.gps.GPSLongitude[0] + exifParsed.gps.GPSLongitude[1]/60 + exifParsed.gps.GPSLongitude[2]/3600
+          photo.coordinates.longitude = exifParsed.gps.GPSLongitude[0] + exifParsed.gps.GPSLongitude[1]/60
+          if (!isNaN(exifParsed.gps.GPSLongitude[2])) {
+            // EOS 50D puts a NaN in the seconds field
+            photo.coordinates.longitude += exifParsed.gps.GPSLongitude[2]/3600
+          }
           if (exifParsed.gps.GPSLongitudeRef === 'W') {
             photo.coordinates.longitude = -photo.coordinates.longitude
           }
