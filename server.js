@@ -57,6 +57,10 @@ app.use('/photos', photos_router);
 app.use('/solardata', solardata);
 app.use('/mapkey', mapkey);
 
+// SOTA Calendar (iCal) endpoint
+const sotacal = require('./sotacal');
+app.get('/sotacal', sotacal.handleSotaCal);
+
 db.waitDb(() => {
 	let sotaSpotReceiver = new SotaSpotReceiver();
 	sotaSpotReceiver.start();

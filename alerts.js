@@ -5,6 +5,7 @@ const summits = require('./summits');
 
 let router = express.Router();
 module.exports = router;
+module.exports.loadAlerts = loadAlerts;
 
 let alertCache = [];
 let lastLoadDate;

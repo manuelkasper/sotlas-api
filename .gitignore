@@ -36,6 +36,14 @@ jspm_packages/
 # rollup.js default build output
 dist/
 
+# Environment variable script for test environment
+env.sh
+
+
+### TypeScript ###
+# Compiled JavaScript files from TypeScript sources
+sotacal.js
+
 
 ### IDE ###
 .idea
