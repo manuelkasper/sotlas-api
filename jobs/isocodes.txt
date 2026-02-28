@@ -92,6 +92,7 @@ V5,na,AF
 VE,ca,NA
 VK,au,OC
 VO,ca,NA
+VP0,gs,SA
 VP8,fk,SA
 VR,hk,AS
 VY,ca,NA
