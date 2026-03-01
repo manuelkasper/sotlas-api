@@ -50,6 +50,7 @@ HL,kr,AS
 HR,hn,NA
 IA,it,AF
 I,it,EU
+J8,vc,NA
 JA,jp,AS
 JX,sj,EU
 JW,no,EU
@@ -71,7 +72,13 @@ OM,sk,EU
 ON,be,EU
 OY,fo,EU
 OZ,dk,EU
+P4,aw,SA
 PA,nl,EU
+PJ2,cw,SA
+PJ4,bq,SA
+PJ5,bq,NA
+PJ6,bq,NA
+PJ7,sx,NA
 PP,br,SA
 PQ,br,SA
 PR,br,SA
