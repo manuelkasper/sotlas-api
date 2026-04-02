@@ -179,7 +179,7 @@ function gpxForQuery(query, name, options, callback) {
     <ele>${summit.altitude}</ele>
     <name><![CDATA[${summitName(summit, options)}]]></name>
     <cmt><![CDATA[${summit.name}]]></cmt>
-    <sym>SOTA${('0' + summit.points).substr(-2)}</sym>
+    <sym>${gpxSymbol(summit, options)}</sym>
     <type>Summit</type>
   </wpt>
 `;
@@ -405,6 +405,19 @@ function geoJsonForQuery(query, options, callback) {
 
 		callback(null, geojson);
 	});
+}
+
+function gpxSymbol(summit, options) {
+	if (options.garminsym) {
+		if (altitude < 1500) {
+			return 'Triangle, Green';
+		} else if (altitude < 2000) {
+			return 'Triangle, Yellow';
+		}
+		return 'Triangle, Red';
+	} else {
+		return 'SOTA' + ('0' + summit.points).substr(-2);
+	}
 }
 
 function summitName(summit, options) {
