@@ -409,9 +409,9 @@ function geoJsonForQuery(query, options, callback) {
 
 function gpxSymbol(summit, options) {
 	if (options.garminsym) {
-		if (altitude < 1500) {
+		if (summit.altitude < 1500) {
 			return 'Triangle, Green';
-		} else if (altitude < 2000) {
+		} else if (summit.altitude < 2000) {
 			return 'Triangle, Yellow';
 		}
 		return 'Triangle, Red';
