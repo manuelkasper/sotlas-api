@@ -1,3 +1,5 @@
+3B8,mu,AF
+3DA,sz,AF
 3Y,no,AF
 4O,me,EU
 4X,il,AS
