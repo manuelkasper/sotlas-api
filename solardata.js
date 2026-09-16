@@ -21,8 +21,11 @@ router.get('/latest', (req, res) => {
 		}
 
 		// Check that the data is not older than 4 hours
-		let solardataMoment = moment.utc(solardata.date + "T" + solardata.hour.toString().padStart(2, '0'))
-		if (moment.utc().diff(solardataMoment, 'hours') > 4) {
+		let solardataMoment = moment.utc(
+			solardata.date + ' ' + solardata.hour.toString().padStart(2, '0') + ':00',
+			'YYYY-MM-DD HH:mm'
+		)
+		if (!solardataMoment.isValid() || moment.utc().diff(solardataMoment, 'hours') > 4) {
 			return res.status(404).end()
 		}
 
@@ -83,6 +86,12 @@ function parseInteger(value) {
 }
 
 function parseWwv(text) {
+	let issuedMatch = text.match(/^:Issued:\s+(\d{4}\s+\w+\s+\d{1,2}\s+\d{4})\s+UTC/m)
+	let issued = issuedMatch ? moment.utc(issuedMatch[1], 'YYYY MMM DD HHmm') : null
+	if (issued && !issued.isValid()) {
+		issued = null
+	}
+
 	let sfiMatch = text.match(/Solar flux\s+(\d+)/i)
 	let aMatch = text.match(/A-index\s+(\d+)/i)
 	let kMatch = text.match(/K-index.*?was\s+([\d.]+)/i)
@@ -92,7 +101,9 @@ function parseWwv(text) {
 	return {
 		sfi: sfiMatch ? parseInteger(sfiMatch[1]) : null,
 		a: aMatch ? parseInteger(aMatch[1]) : null,
-		k: Number.isFinite(k) ? Math.round(k) : null
+		k: Number.isFinite(k) ? Math.round(k) : null,
+		date: issued ? issued.format('YYYY-MM-DD') : null,
+		hour: issued ? issued.hour() : null
 	}
 }
 
@@ -131,12 +142,14 @@ async function fetchSolarData() {
 	let r = dsd.r
 	let a = wwv.a
 	let k = wwv.k
+	let date = wwv.date
+	let hour = wwv.hour
 
-	if (![sfi, r, a, k].every(Number.isFinite)) {
-		throw new Error(`Incomplete solar data (sfi=${sfi}, r=${r}, a=${a}, k=${k})`)
+	if (![sfi, r, a, k, hour].every(Number.isFinite) || !date) {
+		throw new Error(`Incomplete solar data (sfi=${sfi}, r=${r}, a=${a}, k=${k}, date=${date}, hour=${hour})`)
 	}
 
-	return {sfi, r, a, k}
+	return {sfi, r, a, k, date, hour}
 }
 
 let updating = false
@@ -149,9 +162,8 @@ async function updateSolarData() {
 	updating = true
 	try {
 		let values = await fetchSolarData()
-		let now = moment.utc()
-		let date = now.format('YYYY-MM-DD')
-		let hour = now.hour()
+		let date = values.date
+		let hour = values.hour
 
 		await db.getDb().collection('solardata').replaceOne({date, hour}, {
 			date,
