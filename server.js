@@ -66,6 +66,7 @@ db.waitDb(() => {
 	sotaSpotReceiver.start();
 	let rbnReceiver = new RbnReceiver();
 	rbnReceiver.start();
+	solardata.start();
 })
 
 cronjobs();

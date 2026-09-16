@@ -81,7 +81,9 @@ config.sso = {
 };
 
 config.solardata = {
-	apiKey: process.env.SOLARDATA_API_KEY
+	updateInterval: 3600000,
+	wwvUrl: 'https://services.swpc.noaa.gov/text/wwv.txt',
+	dailySolarIndicesUrl: 'https://services.swpc.noaa.gov/text/daily-solar-indices.txt'
 };
 
 config.mapTiler = {
