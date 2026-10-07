@@ -177,7 +177,7 @@ router.post('/summits/:association/:code/reorder', jwtCallback, async (req, res)
     // Assign new sortOrder index to photos of this user, in the order given by req.body.filenames
     let updates = filenames.map((filename, index) => {
       return db.getDb().collection('summits').updateOne(
-        { code: summitCode, 'photos.author': req.auth.callsign, 'photos.filename': filename },
+        { code: summitCode, photos: { $elemMatch: { author: req.auth.callsign, filename } } },
         { $set: { 'photos.$.sortOrder': index + 1 } }
       )
     })
