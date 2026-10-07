@@ -55,7 +55,9 @@ function sanitizeRbnFilter(input) {
 		isActivator,
 		maxAge
 	};
-	if (typeof input.viewId === 'string' && input.viewId.length > 0 && input.viewId.length <= 128) {
+	if (typeof input.viewId === 'number' && Number.isFinite(input.viewId)) {
+		filter.viewId = input.viewId;
+	} else if (typeof input.viewId === 'string' && input.viewId.length > 0 && input.viewId.length <= 128) {
 		filter.viewId = input.viewId;
 	}
 	return filter;
