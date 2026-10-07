@@ -1,4 +1,5 @@
 const express = require('express')
+const fsPromises = require('fs').promises
 const multer  = require('multer')
 const config = require('./config')
 const photos = require('./photos')
@@ -53,6 +54,22 @@ function endServerError(res, err) {
   }
 }
 
+async function removeTempUploads(files) {
+  if (!Array.isArray(files)) {
+    return
+  }
+  await Promise.all(files.map(file => {
+    if (!file || !file.path) {
+      return
+    }
+    return fsPromises.unlink(file.path).catch(err => {
+      if (err.code !== 'ENOENT') {
+        console.error(err)
+      }
+    })
+  }))
+}
+
 router.post('/summits/:association/:code/upload', jwtCallback, uploadPhotos, async (req, res) => {
   try {
     res.cacheControl = {
@@ -93,6 +110,8 @@ router.post('/summits/:association/:code/upload', jwtCallback, uploadPhotos, asy
     }
   } catch (err) {
     endServerError(res, err)
+  } finally {
+    await removeTempUploads(req.files)
   }
 })
 

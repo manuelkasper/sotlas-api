@@ -12,113 +12,122 @@ const db = require('./db')
 
 module.exports = {
   importPhoto: async function(filename, author) {
-    // Hash input file to determine filename
-    let hash = await hasha.fromFile(filename, {algorithm: 'sha256'})
-    let hashFilename = hash.substr(0, 32) + '.jpg'
+    let originalRead
+    try {
+      // Hash input file to determine filename
+      let hash = await hasha.fromFile(filename, {algorithm: 'sha256'})
+      let hashFilename = hash.substr(0, 32) + '.jpg'
 
-    let metadata = await getMetadata(filename)
-    if (metadata.format !== 'jpeg' && metadata.format != 'png' && metadata.format != 'heif') {
-      throw new Error('Bad input format, must be JPEG, PNG or HEIF')
-    }
+      let metadata = await getMetadata(filename)
+      if (metadata.format !== 'jpeg' && metadata.format != 'png' && metadata.format != 'heif') {
+        throw new Error('Bad input format, must be JPEG, PNG or HEIF')
+      }
 
-    // Upload original photo to Backblaze (don't wait for completion)
-    fsPromises.readFile(filename)
-      .then(buffer => {
-        promiseRetry((retry, number) => {
-          return uploadToCloud(config.photos.originalStorage, 'original/' + hashFilename, buffer).catch(retry)
-        }, {retries: 5})
+      // Read the original now so the caller can delete the temp file when this
+      // returns. The cloud upload itself still runs in the background.
+      originalRead = fsPromises.readFile(filename)
+      originalRead
+        .then(buffer => {
+          return promiseRetry((retry, number) => {
+            return uploadToCloud(config.photos.originalStorage, 'original/' + hashFilename, buffer).catch(retry)
+          }, {retries: 5})
+        })
         .catch(() => {
           console.error(`[ALERT] Cloud photo original upload failed for ${filename}`)
         })
-      })
 
-    let photo = {
-      filename: hashFilename,
-      width: Math.round(metadata.width),
-      height: Math.round(metadata.height),
-      author,
-      uploadDate: new Date()
-    }
+      let photo = {
+        filename: hashFilename,
+        width: Math.round(metadata.width),
+        height: Math.round(metadata.height),
+        author,
+        uploadDate: new Date()
+      }
 
-    if (metadata.orientation && metadata.orientation >= 5) {
-      // Swap width/height
-      let tmp = photo.width
-      photo.width = photo.height
-      photo.height = tmp
-    }
+      if (metadata.orientation && metadata.orientation >= 5) {
+        // Swap width/height
+        let tmp = photo.width
+        photo.width = photo.height
+        photo.height = tmp
+      }
 
-    if (metadata.exif) {
-      let exifParsed = exif(metadata.exif)
-      if (exifParsed) {
-        if (exifParsed.gps && exifParsed.gps.GPSLatitude && exifParsed.gps.GPSLongitude &&
-            (!exifParsed.gps.GPSStatus || exifParsed.gps.GPSStatus === 'A') && 
-            !isNaN(exifParsed.gps.GPSLatitude[0]) && !isNaN(exifParsed.gps.GPSLongitude[0]) &&
-            !isNaN(exifParsed.gps.GPSLatitude[1]) && !isNaN(exifParsed.gps.GPSLongitude[1]) &&
-            (exifParsed.gps.GPSLatitude[0] !== 0 || exifParsed.gps.GPSLatitude[1] !== 0 || exifParsed.gps.GPSLatitude[2] !== 0) &&
-            (exifParsed.gps.GPSLongitude[0] !== 0 || exifParsed.gps.GPSLongitude[1] !== 0 || exifParsed.gps.GPSLongitude[2] !== 0)) {
-          photo.coordinates = {}
-          photo.coordinates.latitude = exifParsed.gps.GPSLatitude[0] + exifParsed.gps.GPSLatitude[1]/60
-          if (!isNaN(exifParsed.gps.GPSLatitude[2])) {
-            // EOS 50D puts a NaN in the seconds field
-            photo.coordinates.latitude += exifParsed.gps.GPSLatitude[2]/3600
+      if (metadata.exif) {
+        let exifParsed = exif(metadata.exif)
+        if (exifParsed) {
+          if (exifParsed.gps && exifParsed.gps.GPSLatitude && exifParsed.gps.GPSLongitude &&
+              (!exifParsed.gps.GPSStatus || exifParsed.gps.GPSStatus === 'A') && 
+              !isNaN(exifParsed.gps.GPSLatitude[0]) && !isNaN(exifParsed.gps.GPSLongitude[0]) &&
+              !isNaN(exifParsed.gps.GPSLatitude[1]) && !isNaN(exifParsed.gps.GPSLongitude[1]) &&
+              (exifParsed.gps.GPSLatitude[0] !== 0 || exifParsed.gps.GPSLatitude[1] !== 0 || exifParsed.gps.GPSLatitude[2] !== 0) &&
+              (exifParsed.gps.GPSLongitude[0] !== 0 || exifParsed.gps.GPSLongitude[1] !== 0 || exifParsed.gps.GPSLongitude[2] !== 0)) {
+            photo.coordinates = {}
+            photo.coordinates.latitude = exifParsed.gps.GPSLatitude[0] + exifParsed.gps.GPSLatitude[1]/60
+            if (!isNaN(exifParsed.gps.GPSLatitude[2])) {
+              // EOS 50D puts a NaN in the seconds field
+              photo.coordinates.latitude += exifParsed.gps.GPSLatitude[2]/3600
+            }
+            if (exifParsed.gps.GPSLatitudeRef === 'S') {
+              photo.coordinates.latitude = -photo.coordinates.latitude
+            }
+            photo.coordinates.longitude = exifParsed.gps.GPSLongitude[0] + exifParsed.gps.GPSLongitude[1]/60
+            if (!isNaN(exifParsed.gps.GPSLongitude[2])) {
+              // EOS 50D puts a NaN in the seconds field
+              photo.coordinates.longitude += exifParsed.gps.GPSLongitude[2]/3600
+            }
+            if (exifParsed.gps.GPSLongitudeRef === 'W') {
+              photo.coordinates.longitude = -photo.coordinates.longitude
+            }
+
+            if (exifParsed.gps.GPSImgDirection && exifParsed.gps.GPSImgDirection >= 0 && exifParsed.gps.GPSImgDirection < 360) {
+              photo.direction = Math.round(exifParsed.gps.GPSImgDirection)
+            }
+
+            if (exifParsed.gps.GPSHPositioningError) {
+              photo.positioningError = Math.round(exifParsed.gps.GPSHPositioningError)
+            }
           }
-          if (exifParsed.gps.GPSLatitudeRef === 'S') {
-            photo.coordinates.latitude = -photo.coordinates.latitude
-          }
-          photo.coordinates.longitude = exifParsed.gps.GPSLongitude[0] + exifParsed.gps.GPSLongitude[1]/60
-          if (!isNaN(exifParsed.gps.GPSLongitude[2])) {
-            // EOS 50D puts a NaN in the seconds field
-            photo.coordinates.longitude += exifParsed.gps.GPSLongitude[2]/3600
-          }
-          if (exifParsed.gps.GPSLongitudeRef === 'W') {
-            photo.coordinates.longitude = -photo.coordinates.longitude
+
+          if (exifParsed.image && exifParsed.image.Make && exifParsed.image.Model) {
+            photo.camera = exifParsed.image.Make + ' ' + exifParsed.image.Model
           }
 
-          if (exifParsed.gps.GPSImgDirection && exifParsed.gps.GPSImgDirection >= 0 && exifParsed.gps.GPSImgDirection < 360) {
-            photo.direction = Math.round(exifParsed.gps.GPSImgDirection)
-          }
-
-          if (exifParsed.gps.GPSHPositioningError) {
-            photo.positioningError = Math.round(exifParsed.gps.GPSHPositioningError)
-          }
-        }
-
-        if (exifParsed.image && exifParsed.image.Make && exifParsed.image.Model) {
-          photo.camera = exifParsed.image.Make + ' ' + exifParsed.image.Model
-        }
-
-        if (exifParsed.exif) {
-          if (exifParsed.exif.DateTimeDigitized) {
-            photo.date = exifParsed.exif.DateTimeDigitized
-          } else if (exifParsed.exif.DateTimeOriginal) {
-            photo.date = exifParsed.exif.DateTimeOriginal
+          if (exifParsed.exif) {
+            if (exifParsed.exif.DateTimeDigitized) {
+              photo.date = exifParsed.exif.DateTimeDigitized
+            } else if (exifParsed.exif.DateTimeOriginal) {
+              photo.date = exifParsed.exif.DateTimeOriginal
+            }
           }
         }
       }
+
+      let tasks = []
+      Object.keys(config.photos.sizes).forEach(sizeDescr => {
+        tasks.push(
+          makeResized(filename, config.photos.sizes[sizeDescr].width, config.photos.sizes[sizeDescr].height)
+            .then(buffer => {
+              return promiseRetry((retry, number) => {
+                return uploadToCloud(config.photos.storage, sizeDescr + '/' + hashFilename, buffer).catch(retry)
+              }, {retries: 2})
+            })
+        )
+      })
+
+      await Promise.all(tasks)
+
+      db.getDb().collection('uploads').insertOne({
+        uploadDate: new Date(),
+        type: 'photo',
+        filename: hashFilename,
+        author
+      })
+
+      return photo
+    } finally {
+      if (originalRead) {
+        await originalRead.catch(() => {})
+      }
     }
-
-    let tasks = []
-    Object.keys(config.photos.sizes).forEach(sizeDescr => {
-      tasks.push(
-        makeResized(filename, config.photos.sizes[sizeDescr].width, config.photos.sizes[sizeDescr].height)
-          .then(buffer => {
-            return promiseRetry((retry, number) => {
-              return uploadToCloud(config.photos.storage, sizeDescr + '/' + hashFilename, buffer).catch(retry)
-            }, {retries: 2})
-          })
-      )
-    })
-
-    await Promise.all(tasks)
-
-    db.getDb().collection('uploads').insertOne({
-      uploadDate: new Date(),
-      type: 'photo',
-      filename: hashFilename,
-      author
-    })
-    
-    return photo
   }
 }
 
