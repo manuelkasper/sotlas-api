@@ -142,13 +142,14 @@ function formatICSDate(d: Date): string {
   );
 }
 
-// Escape commas, semicolons, backslashes per RFC5545
+// Escape commas, semicolons, backslashes, and line breaks per RFC 5545.
+// A bare CR must be escaped too, or it starts a new calendar line.
 function escapeICS(value: string): string {
   return value
     .replace(/\\/g, "\\\\")
     .replace(/,/g, "\\,")
     .replace(/;/g, "\\;")
-    .replace(/\r?\n/g, "\\n");
+    .replace(/\r\n|\n|\r/g, "\\n");
 }
 
 // Truncated SHA256 hex via Node.js Crypto
