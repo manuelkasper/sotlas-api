@@ -1,5 +1,12 @@
 const { isSafePattern } = require('redos-detector');
 
+const REGEX_CHECK_OPTIONS = {
+	caseInsensitive: true,
+	timeout: 250,
+	maxSteps: 20000,
+	downgradePattern: false
+};
+
 module.exports = {
 
 	makeCallsignVariations(callsign) {
@@ -32,12 +39,21 @@ module.exports = {
 		}
 		try {
 			new RegExp(pattern, 'i');
-			let result = isSafePattern(pattern, {
-				caseInsensitive: true,
-				timeout: 250,
-				maxSteps: 20000
-			});
-			return result.safe === true;
+		} catch (e) {
+			return false;
+		}
+		try {
+			return isSafePattern(pattern, REGEX_CHECK_OPTIONS).safe === true;
+		} catch (e) {
+			// The checker only accepts patterns with a start anchor. Its default
+			// downgrade prefixes "[^]*?", which overlaps a leading ".*" and rejects
+			// safe searches such as ".*horn". Anchor a copy for the check only.
+			if (!/not bounded at the start/.test(e.message)) {
+				return false;
+			}
+		}
+		try {
+			return isSafePattern('^(?:' + pattern + ')', REGEX_CHECK_OPTIONS).safe === true;
 		} catch (e) {
 			return false;
 		}
