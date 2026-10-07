@@ -251,8 +251,9 @@ app.get('/activators/search', (req, res) => {
 	}
 	let limit = 100;
 	if (req.query.limit) {
-		if (parseInt(req.query.limit) <= limit) {
-			limit = parseInt(req.query.limit);
+		let limitOverride = parseInt(req.query.limit, 10);
+		if (limitOverride > 0 && limitOverride < limit) {
+			limit = limitOverride;
 		}
 	}
 	let sortField = 'score';

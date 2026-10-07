@@ -53,6 +53,8 @@ config.photos = {
 		}
 	},
 	uploadPath: '/tmp/upload/photos',
+	maxUploadBytes: 20 * 1024 * 1024,
+	maxUploadFiles: 20,
 	originalStorage: {
 		endPoint: 's3.eu-central-003.backblazeb2.com',
     	accessKey: process.env.B2_ACCESS_KEY,

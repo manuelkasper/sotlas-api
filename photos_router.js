@@ -6,7 +6,32 @@ const { expressjwt: jwt } = require('express-jwt')
 const { expressJwtSecret } = require('jwks-rsa')
 const db = require('./db')
 
-let upload = multer({dest: config.photos.uploadPath})
+let upload = multer({
+  dest: config.photos.uploadPath,
+  limits: {
+    fileSize: config.photos.maxUploadBytes,
+    files: config.photos.maxUploadFiles
+  }
+})
+
+function uploadPhotos(req, res, next) {
+  upload.array('photo', config.photos.maxUploadFiles)(req, res, (err) => {
+    if (!err) {
+      next()
+      return
+    }
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      res.status(413).end()
+      return
+    }
+    if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') {
+      res.status(400).end()
+      return
+    }
+    console.error(err)
+    res.status(400).end()
+  })
+}
 
 let router = express.Router()
 module.exports = router
@@ -28,7 +53,7 @@ function endServerError(res, err) {
   }
 }
 
-router.post('/summits/:association/:code/upload', jwtCallback, upload.array('photo'), async (req, res) => {
+router.post('/summits/:association/:code/upload', jwtCallback, uploadPhotos, async (req, res) => {
   try {
     res.cacheControl = {
       noCache: true
