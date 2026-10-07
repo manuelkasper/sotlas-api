@@ -494,7 +494,7 @@ function kmlForSummit(summit, options) {
 	return `      <Placemark id="${summit.code}">
         <name><![CDATA[${summitName(summit, options)}]]></name>
         <atom:link href="${summitPageUrl(summit)}"/>
-        <description><![CDATA[${summit.name}, ${summit.altitude}m, ${summit.points}pt<br/><a href="${summitPageUrl(summit)}">${summitPageUrl(summit)}</a>]]></description>
+        <description><![CDATA[${summit.name}, ${summit.altitude}m, ${summit.points}pt]]></description>
         <Point>
           <coordinates>${summit.coordinates.longitude},${summit.coordinates.latitude},${summit.altitude}</coordinates>
         </Point>
