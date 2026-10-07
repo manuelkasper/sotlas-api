@@ -4,17 +4,36 @@ const express = require('express');
 const config = require('./config');
 const db = require('./db');
 
+const CODE_PART = /^[A-Za-z0-9]{1,16}$/;
+
 let router = express.Router();
 module.exports = router;
+
+function validCodePart(value) {
+	return CODE_PART.test(value);
+}
+
+function associationPrefix(association) {
+	return '^' + association + '/';
+}
+
+function regionPrefix(association, region) {
+	return '^' + association + '/' + region + '-';
+}
 
 router.get('/associations/:association.gpx', (req, res) => {
 	res.cacheControl = {
 		noCache: true
 	};
 
+	if (!validCodePart(req.params.association)) {
+		res.status(400).end();
+		return;
+	}
+
 	res.set('Content-Type', 'application/gpx+xml');
 	res.set('Content-Disposition', 'attachment; filename="' + req.params.association + '.gpx"');
-	gpxForQuery('^' + req.params.association + '/', `SOTA Association ${req.params.association}`, req.query, (err, gpx) => {
+	gpxForQuery(associationPrefix(req.params.association), `SOTA Association ${req.params.association}`, req.query, (err, gpx) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();
@@ -29,6 +48,11 @@ router.get('/associations/:association.kml', (req, res) => {
 	res.cacheControl = {
 		noCache: true
 	};
+
+	if (!validCodePart(req.params.association)) {
+		res.status(400).end();
+		return;
+	}
 
 	res.set('Content-Type', 'application/vnd.google-earth.kml+xml');
 	res.set('Content-Disposition', 'attachment; filename="' + req.params.association + '.kml"');
@@ -53,9 +77,14 @@ router.get('/associations/:association.geojson', (req, res) => {
 		noCache: true
 	};
 
+	if (!validCodePart(req.params.association)) {
+		res.status(400).end();
+		return;
+	}
+
 	res.set('Content-Type', 'application/geo+json');
 	res.set('Content-Disposition', 'attachment; filename="' + req.params.association + '.geojson"');
-	geoJsonForQuery('^' + req.params.association + '/', req.query, (err, geoJson) => {
+	geoJsonForQuery(associationPrefix(req.params.association), req.query, (err, geoJson) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();
@@ -71,9 +100,14 @@ router.get('/regions/:association/:region.gpx', (req, res) => {
 		noCache: true
 	};
 
+	if (!validCodePart(req.params.association) || !validCodePart(req.params.region)) {
+		res.status(400).end();
+		return;
+	}
+
 	res.set('Content-Type', 'application/gpx+xml');
 	res.set('Content-Disposition', 'attachment; filename="' + req.params.association + '_' + req.params.region + '.gpx"');
-	gpxForQuery('^' + req.params.association + '/' + req.params.region + '-', `SOTA Region ${req.params.association + '/' + req.params.region}`, req.query, (err, gpx) => {
+	gpxForQuery(regionPrefix(req.params.association, req.params.region), `SOTA Region ${req.params.association + '/' + req.params.region}`, req.query, (err, gpx) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();
@@ -88,6 +122,11 @@ router.get('/regions/:association/:region.kml', (req, res) => {
 	res.cacheControl = {
 		noCache: true
 	};
+
+	if (!validCodePart(req.params.association) || !validCodePart(req.params.region)) {
+		res.status(400).end();
+		return;
+	}
 
 	res.set('Content-Type', 'application/vnd.google-earth.kml+xml');
 	res.set('Content-Disposition', 'attachment; filename="' + req.params.association + '_' + req.params.region + '.kml"');
@@ -112,9 +151,14 @@ router.get('/regions/:association/:region.geojson', (req, res) => {
 		noCache: true
 	};
 
+	if (!validCodePart(req.params.association) || !validCodePart(req.params.region)) {
+		res.status(400).end();
+		return;
+	}
+
 	res.set('Content-Type', 'application/geo+json');
 	res.set('Content-Disposition', 'attachment; filename="' + req.params.association + '_' + req.params.region + '.geojson"');
-	geoJsonForQuery('^' + req.params.association + '/' + req.params.region + '-', req.query, (err, geoJson) => {
+	geoJsonForQuery(regionPrefix(req.params.association, req.params.region), req.query, (err, geoJson) => {
 		if (err) {
 			console.error(err);
 			res.status(500).end();
@@ -272,7 +316,7 @@ function kmlForAssociation(associationCode, options, callback) {
 			return;
 		}
 
-		let filter = {code: {$regex: "^" + association.code + "/"}};
+		let filter = {code: {$regex: associationPrefix(association.code)}};
 		if (!options.inactive) {
 			filter.validFrom = {$lte: new Date()};
 			filter.validTo = {$gte: new Date()};
@@ -328,7 +372,7 @@ function kmlForRegion(associationCode, regionCode, options, callback) {
 			return;
 		}
 
-		let filter = {code: {$regex: "^" + association.code + "/" + regionCode + '-'}};
+		let filter = {code: {$regex: regionPrefix(association.code, regionCode)}};
 		if (!options.inactive) {
 			filter.validFrom = {$lte: new Date()};
 			filter.validTo = {$gte: new Date()};

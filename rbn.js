@@ -6,18 +6,75 @@ const db = require('./db');
 const utils = require('./utils');
 
 const rbnSpotRegex = /^DX de (\S+):\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+dB\s+(\S+)\s+\S+\s+(CQ|DX)\s+(\d+)Z$/;
+const CALLSIGN_PATTERN = /^[A-Z0-9/-]{1,20}$/i;
+const MAX_FILTER_CALLSIGNS = 50;
+const DEFAULT_FILTER_AGE_MS = 3600000;
+const MAX_FILTER_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+function sanitizeRbnFilter(input) {
+	if (!input || typeof input !== 'object' || Array.isArray(input)) {
+		return null;
+	}
+
+	let homeCallsign = null;
+	if (input.homeCallsign !== undefined && input.homeCallsign !== null) {
+		let rawCalls = input.homeCallsign;
+		if (typeof rawCalls === 'string') {
+			rawCalls = rawCalls.split(',').map(call => call.trim()).filter(call => call.length > 0);
+		}
+		if (!Array.isArray(rawCalls) || rawCalls.length === 0 || rawCalls.length > MAX_FILTER_CALLSIGNS) {
+			return null;
+		}
+		homeCallsign = [];
+		for (let call of rawCalls) {
+			if (typeof call !== 'string' || !CALLSIGN_PATTERN.test(call)) {
+				return null;
+			}
+			homeCallsign.push(call.toUpperCase());
+		}
+	}
+
+	if (input.isActivator !== undefined && input.isActivator !== false && input.isActivator !== true) {
+		return null;
+	}
+	let isActivator = input.isActivator === true;
+
+	if (!homeCallsign && !isActivator) {
+		return null;
+	}
+
+	let maxAge = parseInt(input.maxAge, 10);
+	if (!Number.isFinite(maxAge) || maxAge <= 0) {
+		maxAge = DEFAULT_FILTER_AGE_MS;
+	} else if (maxAge > MAX_FILTER_AGE_MS) {
+		maxAge = MAX_FILTER_AGE_MS;
+	}
+
+	let filter = {
+		homeCallsign,
+		isActivator,
+		maxAge
+	};
+	if (typeof input.viewId === 'string' && input.viewId.length > 0 && input.viewId.length <= 128) {
+		filter.viewId = input.viewId;
+	}
+	return filter;
+}
 
 class RbnReceiver {
 	start() {
 		this.restartConnection();
 
 		wsManager.on('message', (ws, message) => {
-			if (message.rbnFilter !== undefined) {
-				//console.log("Set RBN filter to " + JSON.stringify(message.rbnFilter));
-				ws.rbnFilter = message.rbnFilter;
-
-				this.sendSpotHistory(ws)
+			if (!message || message.rbnFilter === undefined) {
+				return;
 			}
+			let filter = sanitizeRbnFilter(message.rbnFilter);
+			if (!filter) {
+				return;
+			}
+			ws.rbnFilter = filter;
+			this.sendSpotHistory(ws);
 		});
 	}
 	
@@ -86,7 +143,7 @@ class RbnReceiver {
 							return false;
 						}
 
-						if (ws.rbnFilter.homeCallsign && ws.rbnFilter.homeCallsign.includes(spot.homeCallsign)) {
+						if (ws.rbnFilter.homeCallsign && ws.rbnFilter.homeCallsign.includes(String(spot.homeCallsign || '').toUpperCase())) {
 							return true;
 						}
 
@@ -110,14 +167,13 @@ class RbnReceiver {
 		let query = {};
 
 		if (ws.rbnFilter.homeCallsign) {
-			query.homeCallsign = ws.rbnFilter.homeCallsign;
+			query.homeCallsign = {$in: ws.rbnFilter.homeCallsign};
 		}
 		if (ws.rbnFilter.isActivator) {
 			query.isActivator = true;
 		}
 
-		let maxAge = parseInt(ws.rbnFilter.maxAge) || 3600000;
-		query.timeStamp = {$gte: new Date(new Date().getTime() - maxAge)};
+		query.timeStamp = {$gte: new Date(new Date().getTime() - ws.rbnFilter.maxAge)};
 
 		db.getDb().collection('rbnspots').find(query).sort({timeStamp: -1}).limit(config.rbn.maxSpotHistory).toArray((err, rbnSpots) => {
 			if (err) {

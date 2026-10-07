@@ -21,6 +21,13 @@ let jwtCallback = jwt({
   algorithms: ['RS256']
 })
 
+function endServerError(res, err) {
+  console.error(err)
+  if (!res.headersSent) {
+    res.status(500).end()
+  }
+}
+
 router.post('/summits/:association/:code/upload', jwtCallback, upload.array('photo'), async (req, res) => {
   try {
     res.cacheControl = {
@@ -60,143 +67,172 @@ router.post('/summits/:association/:code/upload', jwtCallback, upload.array('pho
       res.status(400).end()
     }
   } catch (err) {
-    console.error(err)
-    res.status(500).end()
+    endServerError(res, err)
   }
 })
 
+function findSummitPhoto(summit, filename) {
+  if (!summit || !Array.isArray(summit.photos)) {
+    return null
+  }
+  return summit.photos.find(photo => photo.filename === filename) || null
+}
+
 router.delete('/summits/:association/:code/:filename', jwtCallback, async (req, res) => {
-  res.cacheControl = {
-    noCache: true
-  }
-  
-  if (!req.auth.callsign) {
-    res.status(401).send('Missing callsign in SSO token').end()
-    return
-  }
+  try {
+    res.cacheControl = {
+      noCache: true
+    }
 
-  let summitCode = req.params.association + '/' + req.params.code
-  let summit = await db.getDb().collection('summits').findOne({code: summitCode})
-  let photo = summit.photos.find(photo => photo.filename === req.params.filename)
-  if (!photo) {
-    res.status(404).end()
-    return
+    if (!req.auth.callsign) {
+      res.status(401).send('Missing callsign in SSO token').end()
+      return
+    }
+
+    let summitCode = req.params.association + '/' + req.params.code
+    let summit = await db.getDb().collection('summits').findOne({code: summitCode})
+    let photo = findSummitPhoto(summit, req.params.filename)
+    if (!photo) {
+      res.status(404).end()
+      return
+    }
+
+    // Check that uploader is currently logged in user
+    if (photo.author !== req.auth.callsign) {
+      res.status(401).send('Cannot delete another user\'s photos').end()
+      return
+    }
+
+    await db.getDb().collection('summits').updateOne({code: summitCode}, { $pull: { photos: { filename: req.params.filename } } })
+
+    res.status(204).end()
+  } catch (err) {
+    endServerError(res, err)
   }
-
-  // Check that uploader is currently logged in user
-  if (photo.author !== req.auth.callsign) {
-    res.status(401).send('Cannot delete another user\'s photos').end()
-    return
-  }
-
-  await db.getDb().collection('summits').updateOne({code: summitCode}, { $pull: { photos: { filename: req.params.filename } } })
-
-  res.status(204).end()
 })
 
 router.post('/summits/:association/:code/reorder', jwtCallback, async (req, res) => {
-  res.cacheControl = {
-    noCache: true
+  try {
+    res.cacheControl = {
+      noCache: true
+    }
+
+    if (!req.auth.callsign) {
+      res.status(401).send('Missing callsign in SSO token').end()
+      return
+    }
+
+    let filenames = req.body && req.body.filenames
+    if (!Array.isArray(filenames) || filenames.length > 500 || filenames.some(filename => typeof filename !== 'string' || filename.length === 0 || filename.length > 128)) {
+      res.status(400).end()
+      return
+    }
+
+    let summitCode = req.params.association + '/' + req.params.code
+
+    // Assign new sortOrder index to photos of this user, in the order given by req.body.filenames
+    let updates = filenames.map((filename, index) => {
+      return db.getDb().collection('summits').updateOne(
+        { code: summitCode, 'photos.author': req.auth.callsign, 'photos.filename': filename },
+        { $set: { 'photos.$.sortOrder': index + 1 } }
+      )
+    })
+
+    await Promise.all(updates)
+
+    res.status(204).end()
+  } catch (err) {
+    endServerError(res, err)
   }
-
-  if (!req.auth.callsign) {
-    res.status(401).send('Missing callsign in SSO token').end()
-    return
-  }
-
-  let summitCode = req.params.association + '/' + req.params.code
-
-  // Assign new sortOrder index to photos of this user, in the order given by req.body.filenames
-  let updates = req.body.filenames.map((filename, index) => {
-    return db.getDb().collection('summits').updateOne(
-      { code: summitCode, 'photos.author': req.auth.callsign, 'photos.filename': filename },
-      { $set: { 'photos.$.sortOrder': index + 1 } }
-    )
-  })
-
-  await Promise.all(updates)
-
-  res.status(204).end()
 })
 
 router.post('/summits/:association/:code/:filename', jwtCallback, async (req, res) => {
-  res.cacheControl = {
-    noCache: true
-  }
+  try {
+    res.cacheControl = {
+      noCache: true
+    }
 
-  if (!req.auth.callsign) {
-    res.status(401).send('Missing callsign in SSO token').end()
-    return
-  }
+    if (!req.auth.callsign) {
+      res.status(401).send('Missing callsign in SSO token').end()
+      return
+    }
 
-  let summitCode = req.params.association + '/' + req.params.code
-  let summit = await db.getDb().collection('summits').findOne({code: summitCode})
-  let photo = summit.photos.find(photo => photo.filename === req.params.filename)
-  if (!photo) {
-    res.status(404).end()
-    return
-  }
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+      res.status(400).end()
+      return
+    }
 
-  // Check that editor is the currently logged in user
-  if (photo.author !== req.auth.callsign) {
-    res.status(401).send('Cannot delete another user\'s photos').end()
-    return
-  }
+    let summitCode = req.params.association + '/' + req.params.code
+    let summit = await db.getDb().collection('summits').findOne({code: summitCode})
+    let photo = findSummitPhoto(summit, req.params.filename)
+    if (!photo) {
+      res.status(404).end()
+      return
+    }
 
-  let update = {
-    $set: {},
-    $unset: {}
-  }
+    // Check that editor is the currently logged in user
+    if (photo.author !== req.auth.callsign) {
+      res.status(401).send('Cannot delete another user\'s photos').end()
+      return
+    }
 
-  if (req.body.title) {
-    update.$set['photos.$.title'] = req.body.title
-  } else {
-    update.$unset['photos.$.title'] = ''
-  }
+    let update = {
+      $set: {},
+      $unset: {}
+    }
 
-  if (req.body.date) {
-    update.$set['photos.$.date'] = new Date(req.body.date)
-  } else {
-    update.$unset['photos.$.date'] = ''
-  }
+    if (req.body.title) {
+      update.$set['photos.$.title'] = req.body.title
+    } else {
+      update.$unset['photos.$.title'] = ''
+    }
 
-  if (req.body.coordinates) {
-    update.$set['photos.$.coordinates'] = req.body.coordinates
-    update.$set['photos.$.positioningError'] = req.body.positioningError
-  } else {
-    update.$unset['photos.$.coordinates'] = ''
-    update.$unset['photos.$.positioningError'] = ''
-  }
+    if (req.body.date) {
+      update.$set['photos.$.date'] = new Date(req.body.date)
+    } else {
+      update.$unset['photos.$.date'] = ''
+    }
 
-  if (req.body.direction !== null && req.body.direction !== undefined && req.body.direction !== '') {
-    update.$set['photos.$.direction'] = req.body.direction
-  } else {
-    update.$unset['photos.$.direction'] = ''
-  }
+    if (req.body.coordinates) {
+      update.$set['photos.$.coordinates'] = req.body.coordinates
+      update.$set['photos.$.positioningError'] = req.body.positioningError
+    } else {
+      update.$unset['photos.$.coordinates'] = ''
+      update.$unset['photos.$.positioningError'] = ''
+    }
 
-  if (req.body.isCover) {
-    update.$set['photos.$.isCover'] = true
+    if (req.body.direction !== null && req.body.direction !== undefined && req.body.direction !== '') {
+      update.$set['photos.$.direction'] = req.body.direction
+    } else {
+      update.$unset['photos.$.direction'] = ''
+    }
 
-    // Only one photo can be the cover photo, so unmark all others first
+    if (req.body.isCover) {
+      update.$set['photos.$.isCover'] = true
+
+      // Only one photo can be the cover photo, so unmark all others first
+      await db.getDb().collection('summits').updateOne(
+        { code: summitCode },
+        { $unset: { 'photos.$[].isCover': '' } }
+      )
+    } else {
+      update.$unset['photos.$.isCover'] = ''
+    }
+
+    if (Object.keys(update.$set).length === 0) {
+      delete update.$set
+    }
+    if (Object.keys(update.$unset).length === 0) {
+      delete update.$unset
+    }
+
     await db.getDb().collection('summits').updateOne(
-      { code: summitCode },
-      { $unset: { 'photos.$[].isCover': '' } }
+      { code: summitCode, 'photos.filename': req.params.filename },
+      update
     )
-  } else {
-    update.$unset['photos.$.isCover'] = ''
-  }
 
-  if (Object.keys(update.$set).length === 0) {
-    delete update.$set
+    res.status(204).end()
+  } catch (err) {
+    endServerError(res, err)
   }
-  if (Object.keys(update.$unset).length === 0) {
-    delete update.$unset
-  }
-
-  await db.getDb().collection('summits').updateOne(
-    { code: summitCode, 'photos.filename': req.params.filename },
-    update
-  )
-
-  res.status(204).end()
 })

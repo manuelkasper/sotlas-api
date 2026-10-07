@@ -61,8 +61,15 @@ class WebSocketManager extends EventEmitter {
 	broadcast(message, filter) {
 		let str = JSON.stringify(keyzipper.compressKeys(message));
 		for (const ws of this.webSocketClients) {
-			if (filter && !filter(ws)) {
-				continue;
+			if (filter) {
+				try {
+					if (!filter(ws)) {
+						continue;
+					}
+				} catch (e) {
+					console.error(e);
+					continue;
+				}
 			}
 
 			try {

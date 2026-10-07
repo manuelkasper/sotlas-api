@@ -1,3 +1,5 @@
+const { isSafePattern } = require('redos-detector');
+
 module.exports = {
 
 	makeCallsignVariations(callsign) {
@@ -12,6 +14,32 @@ module.exports = {
 			}
 		} else {
 			return [callsign];
+		}
+	},
+
+	// True when pattern is a case-insensitive regex that will not backtrack
+	// catastrophically. Literals, anchors, and .* are allowed. Invalid patterns
+	// and checker timeouts are rejected.
+	isSafeRegex(pattern, options) {
+		let maxLength = options && options.maxLength !== undefined ? options.maxLength : 100;
+		if (typeof pattern !== 'string' || pattern.length === 0 || pattern.length > maxLength || pattern.includes('\0')) {
+			return false;
+		}
+		// A pattern with no metacharacters is a literal. Case-insensitive literals
+		// of repeated letters make redos-detector report a false positive.
+		if (!/[.*+?^${}()|[\]\\]/.test(pattern)) {
+			return true;
+		}
+		try {
+			new RegExp(pattern, 'i');
+			let result = isSafePattern(pattern, {
+				caseInsensitive: true,
+				timeout: 250,
+				maxSteps: 20000
+			});
+			return result.safe === true;
+		} catch (e) {
+			return false;
 		}
 	},
 

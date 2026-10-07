@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import 'express-cache-controller';
 const alerts = require('./alerts');
+const utils = require('./utils');
 
 interface SotaAlert {
   id: number;
@@ -191,25 +192,18 @@ export async function handleSotaCal(req: Request, res: Response): Promise<void> 
 
     let filteredAlerts = alertList as SotaAlert[];
 
-    // Filter by text search (summit code, summit name, or activator callsign only)
-    if (filter) {
-      try {
-        // Security: Limit regex pattern length to prevent ReDoS attacks
-        // Typical patterns should be < 100 chars; 200 is a reasonable upper limit
-        if (filter.length > 200) {
-          // Pattern too long, treat as invalid
-          filteredAlerts = [];
-        } else {
-          const regex = new RegExp(filter, "i");
-          filteredAlerts = filteredAlerts.filter(alert =>
-            (alert.summit.code && regex.test(alert.summit.code)) ||
-            (alert.summit.name && regex.test(alert.summit.name)) ||
-            (alert.activatorCallsign && regex.test(alert.activatorCallsign))
-          );
-        }
-      } catch (e) {
-        // Invalid regex, return empty results
+    // Regex text search (summit code, summit name, or activator callsign only).
+    // Patterns that can backtrack catastrophically are treated as no match.
+    if (typeof filter === "string" && filter.length > 0) {
+      if (!utils.isSafeRegex(filter, { maxLength: 200 })) {
         filteredAlerts = [];
+      } else {
+        const regex = new RegExp(filter, "i");
+        filteredAlerts = filteredAlerts.filter(alert =>
+          (alert.summit.code && regex.test(alert.summit.code)) ||
+          (alert.summit.name && regex.test(alert.summit.name)) ||
+          (alert.activatorCallsign && regex.test(alert.activatorCallsign))
+        );
       }
     }
 

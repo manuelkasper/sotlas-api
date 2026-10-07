@@ -79,8 +79,13 @@ app.get('/summits/search', (req, res) => {
 			limit = limitOverride;
 		}
 	}
+	if (!utils.isSafeRegex(req.query.q, {maxLength: 100})) {
+		res.status(400).end();
+		return;
+	}
+	let q = req.query.q;
 	db.getDb().collection('summits').find({
-			$or: [{code: {'$regex': req.query.q, '$options': 'i'}}, {name: {'$regex': req.query.q, '$options': 'i'}}, {nameNd: {'$regex': req.query.q, '$options': 'i'}}],
+			$or: [{code: {'$regex': q, '$options': 'i'}}, {name: {'$regex': q, '$options': 'i'}}, {nameNd: {'$regex': q, '$options': 'i'}}],
 			retired: {$in: [null, false]}
 		}, {projection: {'_id': false, 'photos': false, 'routes': false, 'links': false, 'resources': false}}).limit(limit).toArray((err, summits) => {
 		if (err) {
@@ -264,6 +269,10 @@ app.get('/activators/search', (req, res) => {
 	sort[sortField] = sortDirection;
 	let query = {};
 	if (req.query.q !== undefined && req.query.q !== '') {
+		if (!utils.isSafeRegex(req.query.q, {maxLength: 100})) {
+			res.status(400).end();
+			return;
+		}
 		query = {callsign: {'$regex': req.query.q, '$options': 'i'}};
 	}
 
