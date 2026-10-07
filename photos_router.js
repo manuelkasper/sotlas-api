@@ -3,8 +3,7 @@ const fsPromises = require('fs').promises
 const multer  = require('multer')
 const config = require('./config')
 const photos = require('./photos')
-const { expressjwt: jwt } = require('express-jwt')
-const { expressJwtSecret } = require('jwks-rsa')
+const ssoJwt = require('./sso')
 const db = require('./db')
 
 let upload = multer({
@@ -37,15 +36,7 @@ function uploadPhotos(req, res, next) {
 let router = express.Router()
 module.exports = router
 
-let jwtCallback = jwt({
-  secret: expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: config.sso.jwksUri
-  }),
-  algorithms: ['RS256']
-})
+let jwtCallback = ssoJwt()
 
 function endServerError(res, err) {
   console.error(err)

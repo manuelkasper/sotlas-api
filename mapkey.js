@@ -1,21 +1,13 @@
 const express = require("express");
 const config = require('./config')
-const { expressjwt: jwt } = require('express-jwt')
-const { expressJwtSecret } = require('jwks-rsa')
+const ssoJwt = require('./sso');
 const axios = require('axios')
 
 let router = express.Router();
 module.exports = router;
 
-let jwtCallback = jwt({
-    credentialsRequired: false,
-    secret: expressJwtSecret({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri: config.sso.jwksUri
-    }),
-    algorithms: ['RS256']
+let jwtCallback = ssoJwt({
+    credentialsRequired: false
 });
 
 router.get("/get", jwtCallback, async (req, res) => {

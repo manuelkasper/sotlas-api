@@ -1,23 +1,13 @@
 const express = require("express");
 const {body, validationResult} = require('express-validator');
-const config = require('./config')
-const { expressjwt: jwt } = require('express-jwt')
-const { expressJwtSecret } = require('jwks-rsa')
+const ssoJwt = require('./sso');
 const db = require("./db");
 const summitUtils = require('./summits');
 
 let router = express.Router();
 module.exports = router;
 
-let jwtCallback = jwt({
-    secret: expressJwtSecret({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri: config.sso.jwksUri
-    }),
-    algorithms: ['RS256']
-});
+let jwtCallback = ssoJwt();
 
 const DB_COLLECTION_USERS = "users";
 

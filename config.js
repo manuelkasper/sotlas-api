@@ -79,7 +79,9 @@ config.tracks = {
 };
 
 config.sso = {
-	jwksUri: 'https://sso.sota.org.uk/auth/realms/SOTA/protocol/openid-connect/certs'
+	jwksUri: 'https://sso.sota.org.uk/auth/realms/SOTA/protocol/openid-connect/certs',
+	issuer: 'https://sso.sota.org.uk/auth/realms/SOTA',
+	clientId: 'sotlas'
 };
 
 config.solardata = {
