@@ -34,7 +34,8 @@ router.get("/me", jwtCallback, (req, res) => {
             return res.status(404).end();
         }
 
-        let summitObjectList = user.userSummits.map(userSummit => {
+        let userSummits = Array.isArray(user.userSummits) ? user.userSummits : [];
+        let summitObjectList = userSummits.map(userSummit => {
             userSummit.summit = {code: userSummit.code};
             delete userSummit.code;
             return userSummit;
@@ -56,15 +57,30 @@ router.post("/me/settings",
             return res.status(401).send("Missing userid in SSO token").end();
         }
 
+        if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+            return res.status(400).end();
+        }
+
         const newSettings = Object.fromEntries(Object.entries(req.body).map(([k, v]) => ['settings.' + k, v]));
+        const update = {
+            $setOnInsert: {userSummits: []}
+        };
+        if (Object.keys(newSettings).length > 0) {
+            update.$set = newSettings;
+        }
 
         db.getDb().collection(DB_COLLECTION_USERS).updateOne(
             {userid: reqUserId},
-            {$set: newSettings},
-            {upsert: true}
+            update,
+            {upsert: true},
+            (err) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).end();
+                }
+                return res.status(200).end();
+            }
         );
-
-        return res.status(200).end();
     });
 
 router.get("/me/tags", jwtCallback, (req, res) => {
