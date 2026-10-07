@@ -21,6 +21,14 @@ let jwtCallback = jwt({
 
 const DB_COLLECTION_USERS = "users";
 
+router.use((req, res, next) => {
+    res.cacheControl = {
+        private: true,
+        noStore: true
+    };
+    next();
+});
+
 router.get("/me", jwtCallback, (req, res) => {
     const reqUserId = req.auth.userid;
     if (!reqUserId) {
