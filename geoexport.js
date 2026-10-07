@@ -223,6 +223,9 @@ function gpxForQuery(query, name, options, callback) {
     <ele>${summit.altitude}</ele>
     <name><![CDATA[${summitName(summit, options)}]]></name>
     <cmt><![CDATA[${summit.name}]]></cmt>
+    <link href="${summitPageUrl(summit)}">
+      <text><![CDATA[${summit.code}]]></text>
+    </link>
     <sym>${gpxSymbol(summit, options)}</sym>
     <type>Summit</type>
   </wpt>
@@ -437,7 +440,8 @@ function geoJsonForQuery(query, options, callback) {
 				properties: {
 					code: summit.code,
 					name: summit.name,
-					title: summitName(summit, options)
+					title: summitName(summit, options),
+					url: summitPageUrl(summit)
 				}
 			}
 		})
@@ -464,6 +468,10 @@ function gpxSymbol(summit, options) {
 	}
 }
 
+function summitPageUrl(summit) {
+	return 'https://sotl.as/summits/' + summit.code;
+}
+
 function summitName(summit, options) {
 	let name = summit.code;
 	let nameopts = [];
@@ -485,7 +493,8 @@ function summitName(summit, options) {
 function kmlForSummit(summit, options) {
 	return `      <Placemark id="${summit.code}">
         <name><![CDATA[${summitName(summit, options)}]]></name>
-        <description><![CDATA[${summit.name}, ${summit.altitude}m, ${summit.points}pt]]></description>
+        <atom:link href="${summitPageUrl(summit)}"/>
+        <description><![CDATA[${summit.name}, ${summit.altitude}m, ${summit.points}pt<br/><a href="${summitPageUrl(summit)}">${summitPageUrl(summit)}</a>]]></description>
         <Point>
           <coordinates>${summit.coordinates.longitude},${summit.coordinates.latitude},${summit.altitude}</coordinates>
         </Point>
